@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Исторический тест - 9-11 класс (Легкий)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+            overflow: hidden;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,0 L100,0 L100,100 Z" fill="rgba(255,255,255,0.1)"/></svg>');
+            background-size: cover;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 600;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .header .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .registration-section {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 40px;
+            border-left: 6px solid #3498db;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease;
+        }
+        
+        .registration-section:hover {
+            transform: translateY(-2px);
+        }
+        
+        .registration-section h2 {
+            color: #2c3e50;
+            margin-bottom: 25px;
+            font-size: 1.6em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            position: relative;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 1.05em;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 14px 20px;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        .form-group input:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.15);
+            outline: none;
+        }
+        
+        .questions-section h2 {
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 1.8em;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #ecf0f1;
+            position: relative;
+        }
+        
+        .questions-section h2::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 100px;
+            height: 3px;
+            background: #3498db;
+            border-radius: 3px;
+        }
+        
+        .question-card {
+            background: white;
+            border: 2px solid #ecf0f1;
+            border-radius: 18px;
+            padding: 30px;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .question-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(to bottom, #3498db, #2980b9);
+            border-radius: 5px 0 0 5px;
+        }
+        
+        .question-card:hover {
+            border-color: #3498db;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(52, 152, 219, 0.15);
+        }
+        
+        .question-number {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+            box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
+        }
+        
+        .question-text {
+            font-size: 1.2em;
+            color: #2c3e50;
+            margin-bottom: 25px;
+            font-weight: 600;
+            line-height: 1.5;
+            padding-right: 50px;
+        }
+        
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+        }
+        
+        .option-label {
+            display: flex;
+            align-items: center;
+            padding: 18px 20px;
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .option-label::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: transparent;
+            transition: background 0.3s ease;
+        }
+        
+        .option-label:hover {
+            background: #e3f2fd;
+            border-color: #3498db;
+            transform: translateX(5px);
+        }
+        
+        .option-label:hover::before {
+            background: #3498db;
+        }
+        
+        .option-label input {
+            margin-right: 15px;
+            transform: scale(1.3);
+            accent-color: #3498db;
+        }
+        
+        .option-text {
+            font-size: 1.05em;
+            color: #2c3e50;
+            flex: 1;
+        }
+        
+        .submit-section {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #ecf0f1;
+            text-align: center;
+        }
+        
+        .submit-btn {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: white;
+            border: none;
+            padding: 20px 50px;
+            font-size: 1.2em;
+            font-weight: 600;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(39, 174, 96, 0.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(39, 174, 96, 0.4);
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+        }
+        
+        .submit-btn:active {
+            transform: translateY(-1px);
+        }
+        
+        .level-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-size: 0.9em;
+            margin-left: 15px;
+            font-weight: 600;
+            box-shadow: 0 4px 10px rgba(39, 174, 96, 0.3);
+        }
+        
+        .grade-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-size: 0.9em;
+            margin-left: 10px;
+            font-weight: 600;
+            box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
+        }
+        
+        .timer {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            font-weight: 600;
+            color: #2c3e50;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                border-radius: 15px;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .header {
+                padding: 30px 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .question-card {
+                padding: 20px;
+            }
+            
+            .options-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .timer {
+                position: static;
+                margin-bottom: 20px;
+                width: 100%;
+                justify-content: center;
+            }
+        }
+        
+        /* Анимация для ответов */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .option-label.selected {
+            animation: pulse 0.3s ease;
+            border-color: #27ae60;
+            background: #d5f4e6;
+        }
+        
+        /* Стили для модального окна результатов */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+            animation: modalAppear 0.5s ease-out;
+        }
+        
+        @keyframes modalAppear {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        .modal-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+        
+        .modal-title {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+        
+        .modal-score {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin: 20px 0;
+            font-size: 1.5em;
+        }
+        
+        .modal-close {
+            background: #2c3e50;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-top: 20px;
+            transition: background 0.3s ease;
+        }
+        
+        .modal-close:hover {
+            background: #34495e;
+        }
+    </style>
+</head>
+<body>
+    <div class="timer">
+        <span>⏱️</span>
+        <span id="timer">20:00</span>
+    </div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>Исторический тест <span class="grade-badge">9-11 класс</span></h1>
+            <div class="subtitle">Легкий уровень <span class="level-badge">4 вопроса</span></div>
+        </div>
+        
+        <div class="content">
+            <form id="testForm">
+                <div class="registration-section">
+                    <h2>📝 Регистрация участника</h2>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="firstName">Имя</label>
+                            <input type="text" id="firstName" name="firstName" required placeholder="Введите ваше имя">
+                        </div>
+                        <div class="form-group">
+                            <label for="lastName">Фамилия</label>
+                            <input type="text" id="lastName" name="lastName" required placeholder="Введите вашу фамилию">
+                        </div>
+                        <div class="form-group">
+                            <label for="class">Класс</label>
+                            <input type="text" id="class" name="class" required placeholder="Например: 9А или 10Б">
+                        </div>
+                    </div>
+                    <p style="color: #7f8c8d; font-size: 0.95em; margin-top: 10px;">
+                        ⓘ Все данные необходимы для сохранения результатов тестирования
+                    </p>
+                </div>
+                
+                <div class="questions-section">
+                    <h2>📚 Вопросы теста</h2>
+                    
+                    <div class="question-card">
+                        <div class="question-number">1</div>
+                        <div class="question-text">Как звали последнего российского императора?</div>
+                        <div class="options-grid">
+                            <label class="option-label">
+                                <input type="radio" name="q1" value="a">
+                                <span class="option-text">а) Александр III</span>
+                            </label>
+                            <label class="option-label">
+                                <input type="radio" name="q1" value="b">
+                                <span class="option-text">б) Николай II</span>
+                            </label>
+                            <label class="option-label">
+                                <input type="radio" name="q1" value="c">
+                                <span class="option-text">в) Пётр III</span>
+                            </label>
+                            <label class="option-label">
+                                <input type="radio" name="q1" value="d">
+                                <span class="option-text">г) Михаил II</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="question-card">
+                        <div class="question-number">2</div>
+                        <div class="question-text">Какое событие произошло 7 ноября 1917 года (по старому стилю)?</div>
+                        <div class="options-grid">
+                            <label class="option-label">
+                                <input type="radio" name="q2" value="a">
+                                <span class="option-text">а) Начало Великой Отечественной войны</span>
+                            </label>
+                            <label class="option-label">
+                                <input type="radio" name="q2" value="b">
+                                <span class="option-text">б) Октябрьская революция (приход к власти большевиков)</span>
+                            </label>
+                            <label class="option-label">
+                                <input type="radio" name="q2" value="c">
+                                <span class="option-text">в) Отмена крепостного права</span>
+                            </label>
+                            <label class="option-label">
+                                <input type="radio" name="q2" value="d">
+                                <span class="option-text">г) Смерть Ленина</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="question-card">
+                        <div class="question-number">3</div>
+                        <div class="question-text">Кто был Верховным Главнокомандующим СССР в годы Великой Отечественной войны?</div>
+                        <div class="options-grid">
+                            <label class="option-label">
+                                <input type="radio" name="q3" value="a">
+                                <span class="option-text">а) Лев Троцкий</span>
+                            </label>
+                            <label class="option-label">
+                                <input type="radio" name="q3" value="b">
+                                <span class="option-text">б) Георгий Жуков</span>
+                            </label>
+                            <label class="option-label">
+                                <input type="radio" name="q3" value="c">
+                                <span class="option-text">в) Иосиф Сталин</span>
+                            </label>
+                            <label class="option-label">
+                                <input type="radio" name="q3" value="d">
+                                <span class="option-text">г) Климент Ворошилов</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="question-card">
+                        <div class="question-number">4</div>
+                        <div class="question-text">Как называлась политика радикальных реформ М.С. Горбачёва?</div>
+                        <div class="options-grid">
+                            <label class="option-label">
+                                <input type="radio" name="q4" value="a">
+                                <span class="option-text">а) Индустриализация</span>
+                            </label>
+                            <label class="option-label">
+                                <input type="radio" name="q4" value="b">
+                                <span class="option-text">б) Хозрасчёт</span>
+                            </label>
+                            <label class="option-label">
+                                <input type="radio" name="q4" value="c">
+                                <span class="option-text">в) Перестройка</span>
+                            </label>
+                            <label class="option-label">
+                                <input type="radio" name="q4" value="d">
+                                <span class="option-text">г) Оттепель</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="submit-section">
+                        <button type="submit" class="submit-btn">
+                            <span>✅</span>
+                            Отправить ответы
+                        </button>
+                        <p style="color: #7f8c8d; margin-top: 15px; font-size: 0.95em;">
+                            После отправки вы увидите результаты и они будут сохранены
+                        </p>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="resultModal">
+        <div class="modal-content">
+            <div class="modal-icon">🎓</div>
+            <h2 class="modal-title">Результаты теста</h2>
+            <div id="resultDetails" style="color: #7f8c8d; margin-bottom: 20px; line-height: 1.5;">
+                <!-- Данные будут добавлены через JavaScript -->
+            </div>
+            <div id="scoreDisplay" class="modal-score">
+                <!-- Результат будет добавлен через JavaScript -->
+            </div>
+            <button class="modal-close" onclick="closeModal()">Закрыть</button>
+        </div>
+    </div>
+
+    <script>
+        // Таймер
+        let timeLeft = 20 * 60; // 20 минут в секундах
+        const timerElement = document.getElementById('timer');
+        
+        function updateTimer() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                submitTest();
+            } else {
+                timeLeft--;
+            }
+        }
+        
+        const timerInterval = setInterval(updateTimer, 1000);
+        
+        // Выделение выбранных ответов
+        document.querySelectorAll('.option-label input').forEach(input => {
+            input.addEventListener('change', function() {
+                // Удаляем класс selected у всех вариантов в этом вопросе
+                const questionCard = this.closest('.question-card');
+                questionCard.querySelectorAll('.option-label').forEach(label => {
+                    label.classList.remove('selected');
+                });
+                
+                // Добавляем класс selected к выбранному варианту
+                this.closest('.option-label').classList.add('selected');
+            });
+        });
+        
+        // Обработка отправки формы
+        document.getElementById('testForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitTest();
+        });
+        
+        function submitTest() {
+            clearInterval(timerInterval);
+            
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+            const userClass = document.getElementById('class').value;
+            
+            // Проверяем, все ли вопросы отвечены
+            let allAnswered = true;
+            for (let i = 1; i <= 4; i++) {
+                if (!document.querySelector(`input[name="q${i}"]:checked`)) {
+                    allAnswered = false;
+                    break;
+                }
+            }
+            
+            if (!allAnswered) {
+                alert('Пожалуйста, ответьте на все вопросы перед отправкой!');
+                return;
+            }
+            
+            // Правильные ответы
+            const correctAnswers = {
+                q1: 'b',
+                q2: 'b',
+                q3: 'c',
+                q4: 'c'
+            };
+            
+            // Подсчет правильных ответов
+            let score = 0;
+            for (let i = 1; i <= 4; i++) {
+                const questionName = 'q' + i;
+                const selectedOption = document.querySelector(`input[name="${questionName}"]:checked`);
+                if (selectedOption && selectedOption.value === correctAnswers[questionName]) {
+                    score++;
+                }
+            }
+            
+            // Показываем результаты
+            showResults(firstName, lastName, userClass, score);
+            
+            // Отправляем данные на сервер
+            sendResultsToServer(firstName, lastName, userClass, score);
+        }
+        
+        function showResults(firstName, lastName, userClass, score) {
+            const resultDetails = document.getElementById('resultDetails');
+            const scoreDisplay = document.getElementById('scoreDisplay');
+            
+            resultDetails.innerHTML = `
+                <strong>${firstName} ${lastName}</strong><br>
+                Класс: ${userClass}<br>
+                Уровень: Легкий<br>
+                Тест: История 9-11 класс
+            `;
+            
+            scoreDisplay.innerHTML = `Правильных ответов: <strong>${score} из 4</strong>`;
+            
+            // Показываем модальное окно
+            document.getElementById('resultModal').style.display = 'flex';
+        }
+        
+        function closeModal() {
+            document.getElementById('resultModal').style.display = 'none';
+        }
+        
+        function sendResultsToServer(firstName, lastName, userClass, score) {
+            const data = {
+                firstName: firstName,
+                lastName: lastName,
+                class: userClass,
+                testLevel: '4_easy',
+                score: score,
+                maxScore: 4,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Отправка на бекенд Python (замените URL на ваш)
+            fetch('http://localhost:5000/api/submit-test', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Ошибка сети');
+                }
+                return response.json();
+            })
+            .then(result => {
+                console.log('Результаты сохранены:', result);
+            })
+            .catch(error => {
+                console.error('Ошибка при отправке результатов:', error);
+                // Локальное сохранение на случай недоступности сервера
+                localStorage.setItem(`test_result_${Date.now()}`, JSON.stringify(data));
+            });
+        }
+        
+        // Проверка сохраненных данных при загрузке
+        window.addEventListener('load', function() {
+            const savedTests = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('test_result_')) {
+                    savedTests.push(JSON.parse(localStorage.getItem(key)));
+                }
+            }
+            
+            if (savedTests.length > 0) {
+                console.log('Найдены сохраненные тесты:', savedTests.length);
+                // Можно отправить на сервер при восстановлении соединения
+            }
+        });
+    </script>
+</body>
+</html>
