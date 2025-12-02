@@ -665,12 +665,14 @@
                 const questionName = 'q' + i;
                 const selectedOption = document.querySelector(`input[name="${questionName}"]:checked`);
                 const answer = selectedOption ? selectedOption.value : null;
+                const correctAnswer = correctAnswers[questionName];
                 userAnswers.push({
                     question: i,
                     answer: answer,
-                    correct: answer === correctAnswers[questionName]
+                    correct_answer: correctAnswer,
+                    correct: answer === correctAnswer
                 });
-                if (selectedOption && selectedOption.value === correctAnswers[questionName]) {
+                if (selectedOption && selectedOption.value === correctAnswer) {
                     score++;
                 }
             }
@@ -712,7 +714,7 @@
                 timestamp: new Date().toISOString()
             };
             
-            fetch('http://localhost:5000/api/submit-test', {
+            fetch('/api/submit-test', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -1,9 +1,10 @@
 from flask import Flask, render_template, request, jsonify
-from DBmanager import init_db, save_test_result
+from DBmanager import init_db, drop_all_tables, clear_db, save_test_result, get_all_tests, get_test_by_id, get_statistics
 
 app = Flask(__name__)
 
-# Инициализация базы данных при старте приложения
+# Пересоздание базы данных с чистой схемой при старте
+drop_all_tables()
 init_db()
 
 
@@ -61,6 +62,7 @@ def submit_test():
         print(f"Тест успешно сохранен! ID: {test_id}")
         print(f"Ученик: {data['firstName']} {data['lastName']}, Класс: {data['className']}")
         print(f"Уровень: {data['testLevel']}, Баллы: {data['score']}")
+        print(f"Ответы: {data['answers']}")
         
         return jsonify({
             'status': 'success',
@@ -73,6 +75,81 @@ def submit_test():
         return jsonify({
             'status': 'error',
             'message': 'Ошибка сервера при сохранении данных'
+        }), 500
+
+
+@app.route('/api/tests', methods=['GET'])
+def get_tests():
+    """Получение всех результатов тестов"""
+    try:
+        tests = get_all_tests()
+        return jsonify({
+            'status': 'success',
+            'data': tests,
+            'count': len(tests)
+        }), 200
+    except Exception as e:
+        print(f"Ошибка при получении тестов: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': 'Ошибка сервера при получении данных'
+        }), 500
+
+
+@app.route('/api/tests/<int:test_id>', methods=['GET'])
+def get_test(test_id):
+    """Получение конкретного результата теста"""
+    try:
+        test = get_test_by_id(test_id)
+        if test:
+            return jsonify({
+                'status': 'success',
+                'data': test
+            }), 200
+        else:
+            return jsonify({
+                'status': 'error',
+                'message': 'Тест не найден'
+            }), 404
+    except Exception as e:
+        print(f"Ошибка при получении теста: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': 'Ошибка сервера при получении данных'
+        }), 500
+
+
+@app.route('/api/statistics', methods=['GET'])
+def get_stats():
+    """Получение статистики по тестам"""
+    try:
+        stats = get_statistics()
+        return jsonify({
+            'status': 'success',
+            'data': stats
+        }), 200
+    except Exception as e:
+        print(f"Ошибка при получении статистики: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': 'Ошибка сервера при получении статистики'
+        }), 500
+
+
+@app.route('/api/clear-database', methods=['POST'])
+def clear_database():
+    """Очистка базы данных"""
+    try:
+        clear_db()
+        return jsonify({
+            'status': 'success',
+            'message': 'База данных успешно очищена'
+        }), 200
+    except Exception as e:
+        print(f"Ошибка при очистке базы данных: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': 'Ошибка сервера при очистке базы данных'
         }), 500
 
 
