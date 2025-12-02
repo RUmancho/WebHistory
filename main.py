@@ -1,10 +1,9 @@
 from flask import Flask, render_template, request, jsonify
-from DBmanager import init_db, drop_all_tables, clear_db, save_test_result, get_all_tests, get_test_by_id, get_statistics
+from DBmanager import init_db, clear_db, save_test_result, get_all_tests, get_test_by_id, get_statistics, check_test_exists
 
 app = Flask(__name__)
 
-# Пересоздание базы данных с чистой схемой при старте
-drop_all_tables()
+# Инициализация базы данных при старте
 init_db()
 
 
@@ -33,6 +32,43 @@ def middle_school_hard():
     return render_template('MiddleSchoolStudent/hard.html')
 
 
+@app.route('/api/check-test', methods=['POST'])
+def check_test():
+    """Проверка, проходил ли пользователь данный тест"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'status': 'error', 'message': 'Нет данных'}), 400
+        
+        required_fields = ['firstName', 'lastName', 'className', 'testLevel']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({'status': 'error', 'message': f'Отсутствует поле: {field}'}), 400
+        
+        result = check_test_exists(
+            first_name=data['firstName'],
+            last_name=data['lastName'],
+            class_name=data['className'],
+            level=data['testLevel']
+        )
+        
+        if result['exists']:
+            return jsonify({
+                'status': 'exists',
+                'message': f'Вы уже проходили этот тест! Ваш результат: {result["score"]} из {result["max_score"]}',
+                'score': result['score'],
+                'max_score': result['max_score'],
+                'created_at': result['created_at']
+            }), 200
+        
+        return jsonify({'status': 'ok', 'message': 'Тест можно пройти'}), 200
+        
+    except Exception as e:
+        print(f"Ошибка при проверке теста: {str(e)}")
+        return jsonify({'status': 'error', 'message': 'Ошибка сервера'}), 500
+
+
 @app.route('/api/submit-test', methods=['POST'])
 def submit_test():
     """Приём данных теста и сохранение в БД"""
@@ -42,11 +78,24 @@ def submit_test():
         if not data:
             return jsonify({'status': 'error', 'message': 'Нет данных'}), 400
         
-        # Проверка обязательных полей
         required_fields = ['firstName', 'lastName', 'className', 'answers', 'testLevel', 'score']
         for field in required_fields:
             if field not in data:
                 return jsonify({'status': 'error', 'message': f'Отсутствует поле: {field}'}), 400
+        
+        # Проверяем, не проходил ли уже этот тест
+        existing = check_test_exists(
+            first_name=data['firstName'],
+            last_name=data['lastName'],
+            class_name=data['className'],
+            level=data['testLevel']
+        )
+        
+        if existing['exists']:
+            return jsonify({
+                'status': 'exists',
+                'message': f'Вы уже проходили этот тест! Ваш результат: {existing["score"]} из {existing["max_score"]}'
+            }), 409
         
         # Сохранение данных в БД
         test_id = save_test_result(
@@ -62,7 +111,6 @@ def submit_test():
         print(f"Тест успешно сохранен! ID: {test_id}")
         print(f"Ученик: {data['firstName']} {data['lastName']}, Класс: {data['className']}")
         print(f"Уровень: {data['testLevel']}, Баллы: {data['score']}")
-        print(f"Ответы: {data['answers']}")
         
         return jsonify({
             'status': 'success',

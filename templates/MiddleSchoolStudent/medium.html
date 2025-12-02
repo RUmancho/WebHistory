@@ -640,20 +640,77 @@
             });
         });
         
-        // Обработка отправки формы
+        // Валидация имени/фамилии (только буквы)
+        function validateName(value) {
+            const nameRegex = /^[а-яА-ЯёЁa-zA-Z\s\-]+$/;
+            return nameRegex.test(value.trim()) && value.trim().length >= 2;
+        }
+        
+        function showValidationError(inputId, message) {
+            const input = document.getElementById(inputId);
+            input.style.borderColor = '#e74c3c';
+            input.style.boxShadow = '0 0 0 4px rgba(231, 76, 60, 0.15)';
+            
+            let errorDiv = input.parentElement.querySelector('.error-message');
+            if (!errorDiv) {
+                errorDiv = document.createElement('div');
+                errorDiv.className = 'error-message';
+                errorDiv.style.color = '#e74c3c';
+                errorDiv.style.fontSize = '0.85em';
+                errorDiv.style.marginTop = '5px';
+                input.parentElement.appendChild(errorDiv);
+            }
+            errorDiv.textContent = message;
+        }
+        
+        function clearValidationError(inputId) {
+            const input = document.getElementById(inputId);
+            input.style.borderColor = '#ddd';
+            input.style.boxShadow = 'none';
+            
+            const errorDiv = input.parentElement.querySelector('.error-message');
+            if (errorDiv) errorDiv.remove();
+        }
+        
+        document.getElementById('firstName').addEventListener('input', function() {
+            if (this.value && !validateName(this.value)) {
+                showValidationError('firstName', 'Имя должно содержать только буквы');
+            } else {
+                clearValidationError('firstName');
+            }
+        });
+        
+        document.getElementById('lastName').addEventListener('input', function() {
+            if (this.value && !validateName(this.value)) {
+                showValidationError('lastName', 'Фамилия должна содержать только буквы');
+            } else {
+                clearValidationError('lastName');
+            }
+        });
+        
         document.getElementById('testForm').addEventListener('submit', function(e) {
             e.preventDefault();
             submitTest();
         });
         
-        function submitTest() {
-            clearInterval(timerInterval);
+        async function submitTest() {
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            const userClass = document.getElementById('class').value.trim();
             
-            const firstName = document.getElementById('firstName').value;
-            const lastName = document.getElementById('lastName').value;
-            const userClass = document.getElementById('class').value;
+            if (!validateName(firstName)) {
+                showValidationError('firstName', 'Введите корректное имя (только буквы, минимум 2 символа)');
+                return;
+            }
+            if (!validateName(lastName)) {
+                showValidationError('lastName', 'Введите корректную фамилию (только буквы, минимум 2 символа)');
+                return;
+            }
+            if (!userClass) {
+                alert('Пожалуйста, укажите класс!');
+                return;
+            }
             
-            // Проверяем, все ли вопросы отвечены
             let allAnswered = true;
             for (let i = 1; i <= 4; i++) {
                 if (!document.querySelector(`input[name="q${i}"]:checked`)) {
@@ -661,21 +718,29 @@
                     break;
                 }
             }
-            
             if (!allAnswered) {
                 alert('Пожалуйста, ответьте на все вопросы перед отправкой!');
                 return;
             }
             
-            // Правильные ответы
-            const correctAnswers = {
-                q1: 'b',
-                q2: 'b',
-                q3: 'b',
-                q4: 'b'
-            };
+            try {
+                const checkResponse = await fetch('/api/check-test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ firstName, lastName, className: userClass, testLevel: '3_medium' })
+                });
+                const checkResult = await checkResponse.json();
+                if (checkResult.status === 'exists') {
+                    alert(checkResult.message);
+                    return;
+                }
+            } catch (error) {
+                console.error('Ошибка проверки:', error);
+            }
             
-            // Подсчет правильных ответов
+            clearInterval(timerInterval);
+            
+            const correctAnswers = { q1: 'b', q2: 'b', q3: 'b', q4: 'b' };
             const userAnswers = [];
             let score = 0;
             for (let i = 1; i <= 4; i++) {
@@ -683,38 +748,20 @@
                 const selectedOption = document.querySelector(`input[name="${questionName}"]:checked`);
                 const answer = selectedOption ? selectedOption.value : null;
                 const correctAnswer = correctAnswers[questionName];
-                userAnswers.push({
-                    question: i,
-                    answer: answer,
-                    correct_answer: correctAnswer,
-                    correct: answer === correctAnswer
-                });
-                if (selectedOption && selectedOption.value === correctAnswer) {
-                    score++;
-                }
+                userAnswers.push({ question: i, answer, correct_answer: correctAnswer, correct: answer === correctAnswer });
+                if (answer === correctAnswer) score++;
             }
             
-            // Показываем результаты
+            await sendResultsToServer(firstName, lastName, userClass, userAnswers, score);
             showResults(firstName, lastName, userClass, score);
-            
-            // Отправляем данные на сервер
-            sendResultsToServer(firstName, lastName, userClass, userAnswers, score);
         }
         
         function showResults(firstName, lastName, userClass, score) {
-            const resultDetails = document.getElementById('resultDetails');
-            const scoreDisplay = document.getElementById('scoreDisplay');
-            
-            resultDetails.innerHTML = `
+            document.getElementById('resultDetails').innerHTML = `
                 <strong>${firstName} ${lastName}</strong><br>
-                Класс: ${userClass}<br>
-                Уровень: Средний<br>
-                Тест: История 7-8 класс
+                Класс: ${userClass}<br>Уровень: Средний<br>Тест: История 7-8 класс
             `;
-            
-            scoreDisplay.innerHTML = `Правильных ответов: <strong>${score} из 4</strong>`;
-            
-            // Показываем модальное окно
+            document.getElementById('scoreDisplay').innerHTML = `Правильных ответов: <strong>${score} из 4</strong>`;
             document.getElementById('resultModal').style.display = 'flex';
         }
         
@@ -722,58 +769,21 @@
             document.getElementById('resultModal').style.display = 'none';
         }
         
-        function sendResultsToServer(firstName, lastName, userClass, answers, score) {
-            const data = {
-                firstName: firstName,
-                lastName: lastName,
-                className: userClass,
-                answers: answers,
-                testLevel: '3_medium',
-                score: score,
-                maxScore: 4,
-                time: 1800 - timeLeft,
-                timestamp: new Date().toISOString()
-            };
-            
-            // Отправка на бекенд Python
-            fetch('/api/submit-test', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data)
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Ошибка сети');
-                }
-                return response.json();
-            })
-            .then(result => {
+        async function sendResultsToServer(firstName, lastName, userClass, answers, score) {
+            const data = { firstName, lastName, className: userClass, answers, testLevel: '3_medium', score, maxScore: 4, time: 1500 - timeLeft };
+            try {
+                const response = await fetch('/api/submit-test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                if (result.status === 'exists') { alert(result.message); return; }
                 console.log('Результаты сохранены:', result);
-            })
-            .catch(error => {
+            } catch (error) {
                 console.error('Ошибка при отправке результатов:', error);
-                // Локальное сохранение на случай недоступности сервера
-                localStorage.setItem(`test_result_${Date.now()}`, JSON.stringify(data));
-            });
+            }
         }
-        
-        // Проверка сохраненных данных при загрузке
-        window.addEventListener('load', function() {
-            const savedTests = [];
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key.startsWith('test_result_')) {
-                    savedTests.push(JSON.parse(localStorage.getItem(key)));
-                }
-            }
-            
-            if (savedTests.length > 0) {
-                console.log('Найдены сохраненные тесты:', savedTests.length);
-                // Можно отправить на сервер при восстановлении соединения
-            }
-        });
     </script>
 </body>
 </html>

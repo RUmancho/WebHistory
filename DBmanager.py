@@ -1,6 +1,5 @@
 import sqlite3
 import json
-from datetime import datetime
 
 DATABASE_PATH = 'database.db'
 
@@ -21,6 +20,11 @@ def init_db():
     try:
         conn = get_connection()
         cursor = conn.cursor()
+        
+        # Удаляем старые лишние таблицы если есть
+        cursor.execute('DROP TABLE IF EXISTS Answers')
+        cursor.execute('DROP TABLE IF EXISTS TestResults')
+        cursor.execute('DROP TABLE IF EXISTS Users')
         
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS Test (
@@ -64,36 +68,40 @@ def clear_db():
         raise
 
 
-def drop_all_tables():
-    """Удаление всех таблиц (для пересоздания схемы)"""
+def check_test_exists(first_name, last_name, class_name, level):
+    """Проверка, проходил ли пользователь данный тест"""
     try:
         conn = get_connection()
         cursor = conn.cursor()
         
-        cursor.execute('DROP TABLE IF EXISTS Answers')
-        cursor.execute('DROP TABLE IF EXISTS TestResults')
-        cursor.execute('DROP TABLE IF EXISTS Users')
-        cursor.execute('DROP TABLE IF EXISTS Test')
+        cursor.execute('''
+            SELECT id, score, max_score, created_at FROM Test 
+            WHERE LOWER(first_name) = LOWER(?) 
+            AND LOWER(last_name) = LOWER(?) 
+            AND LOWER(class_name) = LOWER(?) 
+            AND level = ?
+        ''', (first_name.strip(), last_name.strip(), class_name.strip(), level))
         
-        conn.commit()
+        row = cursor.fetchone()
         conn.close()
-        print("Все таблицы удалены")
+        
+        if row:
+            return {
+                'exists': True,
+                'test_id': row['id'],
+                'score': row['score'],
+                'max_score': row['max_score'],
+                'created_at': row['created_at']
+            }
+        return {'exists': False}
         
     except Exception as e:
-        print(f"Ошибка при удалении таблиц: {str(e)}")
-        raise
+        print(f"Ошибка при проверке существования теста: {str(e)}")
+        return {'exists': False}
 
 
 def save_test_result(first_name, last_name, class_name, answers, score, level, time=0):
-    """Сохранение результатов теста в базу данных
-    
-    answers - список ответов в формате:
-    [
-        {"question": 1, "answer": "c", "correct_answer": "c", "correct": true},
-        {"question": 2, "answer": "a", "correct_answer": "b", "correct": false},
-        ...
-    ]
-    """
+    """Сохранение результатов теста в базу данных"""
     try:
         conn = get_connection()
         cursor = conn.cursor()
@@ -109,7 +117,7 @@ def save_test_result(first_name, last_name, class_name, answers, score, level, t
         cursor.execute('''
         INSERT INTO Test (first_name, last_name, class_name, answers, score, max_score, level, time_spent)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (first_name, last_name, class_name, answers_json, score, max_score, level, time))
+        ''', (first_name.strip(), last_name.strip(), class_name.strip(), answers_json, score, max_score, level, time))
         
         test_id = cursor.lastrowid
         conn.commit()
@@ -195,16 +203,13 @@ def get_statistics():
         
         stats = {}
         
-        # Общее количество тестов
         cursor.execute('SELECT COUNT(*) as count FROM Test')
         stats['total_tests'] = cursor.fetchone()['count']
         
-        # Средний балл в процентах
         cursor.execute('SELECT AVG(score * 1.0 / max_score * 100) as avg FROM Test')
         result = cursor.fetchone()['avg']
         stats['average_score_percent'] = round(result, 2) if result else 0
         
-        # Статистика по уровням
         cursor.execute('''
             SELECT level, COUNT(*) as count, 
                    AVG(score * 1.0 / max_score * 100) as avg_score
