@@ -676,10 +676,17 @@
             };
             
             // Подсчет правильных ответов
+            const userAnswers = [];
             let score = 0;
             for (let i = 1; i <= 4; i++) {
                 const questionName = 'q' + i;
                 const selectedOption = document.querySelector(`input[name="${questionName}"]:checked`);
+                const answer = selectedOption ? selectedOption.value : null;
+                userAnswers.push({
+                    question: i,
+                    answer: answer,
+                    correct: answer === correctAnswers[questionName]
+                });
                 if (selectedOption && selectedOption.value === correctAnswers[questionName]) {
                     score++;
                 }
@@ -689,7 +696,7 @@
             showResults(firstName, lastName, userClass, score);
             
             // Отправляем данные на сервер
-            sendResultsToServer(firstName, lastName, userClass, score);
+            sendResultsToServer(firstName, lastName, userClass, userAnswers, score);
         }
         
         function showResults(firstName, lastName, userClass, score) {
@@ -713,14 +720,16 @@
             document.getElementById('resultModal').style.display = 'none';
         }
         
-        function sendResultsToServer(firstName, lastName, userClass, score) {
+        function sendResultsToServer(firstName, lastName, userClass, answers, score) {
             const data = {
                 firstName: firstName,
                 lastName: lastName,
-                class: userClass,
+                className: userClass,
+                answers: answers,
                 testLevel: '4_easy',
                 score: score,
                 maxScore: 4,
+                time: 1800 - timeLeft,
                 timestamp: new Date().toISOString()
             };
             
