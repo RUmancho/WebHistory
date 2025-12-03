@@ -105,13 +105,31 @@
             font-weight: 500;
         }
         
-        .form-group input {
+        .form-group input,
+        .form-group select {
             width: 100%;
             padding: 16px 20px;
             border: 2px solid rgba(255, 255, 255, 0.1);
             border-radius: 12px;
             font-size: 16px;
             background: rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+        }
+        
+        .form-group select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238892b0' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+        }
+        
+        .form-group select:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .form-group select option {
+            background: #1a1a2e;
             color: #e8e8e8;
             transition: all 0.3s ease;
         }
@@ -296,6 +314,36 @@
             background: rgba(241, 196, 15, 0.2);
             color: #f1c40f;
             border: 1px solid rgba(241, 196, 15, 0.3);
+        }
+        
+        .time-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-weight: 500;
+            font-size: 0.85em;
+            background: rgba(155, 89, 182, 0.2);
+            color: #9b59b6;
+            border: 1px solid rgba(155, 89, 182, 0.3);
+        }
+        
+        .selected-location {
+            text-align: center;
+            margin-bottom: 25px;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(233, 69, 96, 0.15), rgba(243, 156, 18, 0.15));
+            border-radius: 15px;
+            border: 1px solid rgba(233, 69, 96, 0.3);
+        }
+        
+        .selected-location h3 {
+            color: #e94560;
+            font-size: 1.4em;
+            margin: 0;
+        }
+        
+        .selected-location span {
+            color: #f39c12;
         }
         
         .score-poor {
@@ -946,9 +994,16 @@
             <h2>Доступ для учителя</h2>
             <form id="authForm">
                 <div class="form-group">
-                    <label for="schoolNumber">Номер школы</label>
-                    <input type="number" id="schoolNumber" name="schoolNumber" required 
-                           placeholder="Например: 189" min="1" max="9999">
+                    <label for="citySelect">Город</label>
+                    <select id="citySelect" name="citySelect" required>
+                        <option value="">-- Выберите город --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="schoolSelect">Школа</label>
+                    <select id="schoolSelect" name="schoolSelect" required disabled>
+                        <option value="">-- Сначала выберите город --</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label for="teacherKey">Введите ключ доступа</label>
@@ -962,6 +1017,10 @@
         
         <!-- Секция результатов -->
         <div class="results-section" id="resultsSection">
+            <div class="selected-location" id="selectedLocation">
+                <!-- Город и школа будут добавлены через JavaScript -->
+            </div>
+            
             <button class="logout-btn" onclick="logout()">
                 <span>🔒</span> Выйти
             </button>
@@ -1037,11 +1096,88 @@
             return `Вопрос ${questionNum}`;
         }
         
+        function formatTime(seconds) {
+            if (!seconds || seconds <= 0) return '—';
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            if (mins === 0) return `${secs}с`;
+            return `${mins}м ${secs}с`;
+        }
+        
+        let citiesData = {};
+        let selectedCity = '';
+        let selectedSchool = '';
+        
+        // Загрузка городов и школ при старте
+        async function loadCitiesAndSchools() {
+            try {
+                const response = await fetch('/api/cities-schools');
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    citiesData = result.data;
+                    const citySelect = document.getElementById('citySelect');
+                    
+                    // Добавляем города в выпадающий список
+                    for (const city in citiesData) {
+                        const option = document.createElement('option');
+                        option.value = city;
+                        option.textContent = city;
+                        citySelect.appendChild(option);
+                    }
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки городов:', error);
+            }
+        }
+        
+        // Обработчик изменения города
+        document.getElementById('citySelect').addEventListener('change', function() {
+            const city = this.value;
+            selectedCity = city;
+            const schoolSelect = document.getElementById('schoolSelect');
+            
+            // Очищаем и заполняем список школ
+            schoolSelect.innerHTML = '<option value="">-- Выберите школу --</option>';
+            
+            if (city && citiesData[city]) {
+                schoolSelect.disabled = false;
+                citiesData[city].forEach(school => {
+                    const option = document.createElement('option');
+                    option.value = school;
+                    option.textContent = `Школа №${school}`;
+                    schoolSelect.appendChild(option);
+                });
+            } else {
+                schoolSelect.disabled = true;
+                schoolSelect.innerHTML = '<option value="">-- Сначала выберите город --</option>';
+            }
+        });
+        
+        document.getElementById('schoolSelect').addEventListener('change', function() {
+            selectedSchool = this.value;
+        });
+        
+        // Загружаем данные при старте
+        loadCitiesAndSchools();
+        
         document.getElementById('authForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
+            const city = document.getElementById('citySelect').value;
+            const school = document.getElementById('schoolSelect').value;
             const key = document.getElementById('teacherKey').value.trim();
             const errorMessage = document.getElementById('errorMessage');
+            
+            if (!city) {
+                showError('Пожалуйста, выберите город');
+                return;
+            }
+            
+            if (!school) {
+                showError('Пожалуйста, выберите школу');
+                return;
+            }
             
             if (!key) {
                 showError('Пожалуйста, введите ключ доступа');
@@ -1052,7 +1188,7 @@
                 const response = await fetch('/api/verify-key', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ key })
+                    body: JSON.stringify({ key, city, school })
                 });
                 
                 const result = await response.json();
@@ -1060,6 +1196,8 @@
                 if (result.status === 'success') {
                     errorMessage.style.display = 'none';
                     allData = result.data;
+                    selectedCity = city;
+                    selectedSchool = school;
                     showResults(result.data);
                 } else {
                     showError(result.message || 'Неверный ключ доступа');
@@ -1080,6 +1218,11 @@
         function showResults(data) {
             document.getElementById('authSection').style.display = 'none';
             document.getElementById('resultsSection').style.display = 'block';
+            
+            // Показываем выбранный город и школу
+            document.getElementById('selectedLocation').innerHTML = `
+                <h3>📍 ${escapeHtml(selectedCity)} — <span>Школа №${escapeHtml(selectedSchool)}</span></h3>
+            `;
             
             const classesContainer = document.getElementById('classesContainer');
             const statsBar = document.getElementById('statsBar');
@@ -1155,7 +1298,8 @@
                         level: student.level,
                         score: student.score,
                         max_score: student.max_score,
-                        answers: student.answers
+                        answers: student.answers,
+                        time_spent: student.time_spent || 0
                     });
                 });
                 
@@ -1183,6 +1327,7 @@
                                     <th>Фамилия</th>
                                     <th>Уровень</th>
                                     <th>Результат</th>
+                                    <th>Время</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1194,6 +1339,7 @@
                     // Формируем строку уровней и результатов
                     const levelNames = student.tests.map(t => getLevelName(t.level)).join(' / ');
                     const results = student.tests.map(t => Math.round((t.score / t.max_score) * 100) + '%').join(' / ');
+                    const times = student.tests.map(t => formatTime(t.time_spent)).join(' / ');
                     
                     // Определяем общий класс результата (по среднему)
                     const totalScore = student.tests.reduce((sum, t) => sum + t.score, 0);
@@ -1206,13 +1352,14 @@
                             <td>${escapeHtml(student.last_name)}</td>
                             <td><span class="level-badge">${levelNames}</span></td>
                             <td><span class="score-badge ${scoreClass}">${results}</span></td>
+                            <td><span class="time-badge">${times}</span></td>
                         </tr>
                     `;
                     
                     // Детали ученика - показываем все тесты
                     html += `
                         <tr>
-                            <td colspan="4" style="padding: 0; border: none;">
+                            <td colspan="5" style="padding: 0; border: none;">
                                 <div class="student-details" id="${studentId}">
                     `;
                     
@@ -1220,11 +1367,12 @@
                     student.tests.forEach((test, testIndex) => {
                         const levelName = getLevelName(test.level);
                         const percent = Math.round((test.score / test.max_score) * 100);
+                        const timeStr = formatTime(test.time_spent);
                         
                         html += `
                             <div class="test-section">
                                 <div class="test-header">
-                                    📝 Тест: <strong>${levelName}</strong> — ${test.score}/${test.max_score} (${percent}%)
+                                    📝 Тест: <strong>${levelName}</strong> — ${test.score}/${test.max_score} (${percent}%) | ⏱️ ${timeStr}
                                 </div>
                                 <div class="answers-list">
                         `;

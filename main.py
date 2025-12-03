@@ -42,8 +42,12 @@ def verify_key():
         if data['key'].strip() != teacher_key:
             return jsonify({'status': 'error', 'message': 'Неверный ключ доступа'}), 403
         
-        # Ключ верный - возвращаем данные учеников по классам
-        students_by_class = get_students_by_class()
+        # Получаем фильтры
+        city = data.get('city', '')
+        school = data.get('school', '')
+        
+        # Ключ верный - возвращаем данные учеников по классам с фильтрацией
+        students_by_class = get_students_by_class(city=city if city else None, school=school if school else None)
         
         return jsonify({
             'status': 'success',
@@ -52,6 +56,20 @@ def verify_key():
         
     except Exception as e:
         print(f"Ошибка при проверке ключа: {str(e)}")
+        return jsonify({'status': 'error', 'message': 'Ошибка сервера'}), 500
+
+
+@app.route('/api/cities-schools', methods=['GET'])
+def get_cities_schools():
+    """Получение списка городов и школ"""
+    try:
+        cities = get_cities_and_schools()
+        return jsonify({
+            'status': 'success',
+            'data': cities
+        }), 200
+    except Exception as e:
+        print(f"Ошибка при получении городов и школ: {str(e)}")
         return jsonify({'status': 'error', 'message': 'Ошибка сервера'}), 500
 
 
@@ -150,6 +168,7 @@ def submit_test():
             first_name=data['firstName'],
             last_name=data['lastName'],
             class_name=data['className'],
+            city=data.get('city', ''),
             school=data.get('school', ''),
             answers=data['answers'],
             score=data['score'],
@@ -158,7 +177,7 @@ def submit_test():
         )
         
         print(f"Тест успешно сохранен! ID: {test_id}")
-        print(f"Ученик: {data['firstName']} {data['lastName']}, Класс: {data['className']}")
+        print(f"Ученик: {data['firstName']} {data['lastName']}, Класс: {data['className']}, Город: {data.get('city', '')}, Школа: {data.get('school', '')}")
         print(f"Уровень: {data['testLevel']}, Баллы: {data['score']}")
         
         return jsonify({

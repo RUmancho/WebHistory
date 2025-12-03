@@ -496,8 +496,12 @@
                             <input type="text" id="class" name="class" required placeholder="Например: 7А или 8Б">
                         </div>
                         <div class="form-group">
-                            <label for="school">Школа</label>
-                            <input type="text" id="school" name="school" required placeholder="Например: Школа №189">
+                            <label for="city">Город</label>
+                            <input type="text" id="city" name="city" required placeholder="Например: Нижний Новгород">
+                        </div>
+                        <div class="form-group">
+                            <label for="school">Номер школы</label>
+                            <input type="number" id="school" name="school" required placeholder="Например: 189" min="1" max="9999">
                         </div>
                     </div>
                     <p style="color: #7f8c8d; font-size: 0.95em; margin-top: 10px;">
@@ -719,6 +723,7 @@
             const firstName = document.getElementById('firstName').value.trim();
             const lastName = document.getElementById('lastName').value.trim();
             const userClass = document.getElementById('class').value.trim();
+            const city = document.getElementById('city').value.trim();
             const school = document.getElementById('school').value.trim();
             
             if (!validateName(firstName)) {
@@ -731,6 +736,14 @@
             }
             if (!userClass) {
                 alert('Пожалуйста, укажите класс!');
+                return;
+            }
+            if (!city) {
+                alert('Пожалуйста, укажите город!');
+                return;
+            }
+            if (!school) {
+                alert('Пожалуйста, укажите номер школы!');
                 return;
             }
             
@@ -775,14 +788,14 @@
                 if (answer === correctAnswer) score++;
             }
             
-            await sendResultsToServer(firstName, lastName, userClass, school, userAnswers, score);
-            showResults(firstName, lastName, userClass, school, score);
+            await sendResultsToServer(firstName, lastName, userClass, city, school, userAnswers, score);
+            showResults(firstName, lastName, userClass, city, school, score);
         }
         
-        function showResults(firstName, lastName, userClass, school, score) {
+        function showResults(firstName, lastName, userClass, city, school, score) {
             document.getElementById('resultDetails').innerHTML = `
                 <strong>${firstName} ${lastName}</strong><br>
-                Класс: ${userClass}<br>Школа: ${school}<br>Уровень: Средний<br>Тест: История 7-8 класс
+                Класс: ${userClass}<br>Город: ${city}<br>Школа №${school}<br>Уровень: Средний<br>Тест: История 7-8 класс
             `;
             document.getElementById('scoreDisplay').innerHTML = `Правильных ответов: <strong>${score} из 4</strong>`;
             document.getElementById('resultModal').style.display = 'flex';
@@ -792,8 +805,8 @@
             document.getElementById('resultModal').style.display = 'none';
         }
         
-        async function sendResultsToServer(firstName, lastName, userClass, school, answers, score) {
-            const data = { firstName, lastName, className: userClass, school, answers, testLevel: '3_medium', score, maxScore: 4, time: 1500 - timeLeft };
+        async function sendResultsToServer(firstName, lastName, userClass, city, school, answers, score) {
+            const data = { firstName, lastName, className: userClass, city, school, answers, testLevel: '3_medium', score, maxScore: 4, time: 1500 - timeLeft };
             try {
                 const response = await fetch('/api/submit-test', {
                     method: 'POST',
