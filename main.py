@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, jsonify
-from DBmanager import init_db, clear_db, save_test_result, get_all_tests, get_test_by_id, get_statistics, check_test_exists, get_students_by_class
+from DBmanager import *
 
 app = Flask(__name__)
 

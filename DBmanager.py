@@ -233,7 +233,7 @@ def get_students_by_class():
         cursor = conn.cursor()
         
         cursor.execute('''
-            SELECT class_name, first_name, last_name, score, max_score, level, created_at
+            SELECT id, class_name, first_name, last_name, answers, score, max_score, level, created_at
             FROM Test
             ORDER BY class_name, last_name, first_name
         ''')
@@ -249,8 +249,10 @@ def get_students_by_class():
                 classes[class_name] = []
             
             classes[class_name].append({
+                'id': row['id'],
                 'first_name': row['first_name'],
                 'last_name': row['last_name'],
+                'answers': json.loads(row['answers']),
                 'score': row['score'],
                 'max_score': row['max_score'],
                 'level': row['level'],
