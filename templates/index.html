@@ -454,6 +454,152 @@
             border-left: 4px solid #e74c3c;
         }
         
+        /* Статистика по вопросам */
+        .questions-stats-section {
+            margin-top: 30px;
+        }
+        
+        .questions-stats-title {
+            color: #e8e8e8;
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .test-level-group {
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .test-level-title {
+            color: #9b59b6;
+            font-size: 1em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(155, 89, 182, 0.3);
+        }
+        
+        .question-stat-item {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 12px;
+        }
+        
+        .question-stat-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .question-stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        
+        .question-stat-text {
+            flex: 1;
+            color: #e8e8e8;
+            font-size: 0.95em;
+            line-height: 1.4;
+            padding-right: 15px;
+        }
+        
+        .question-stat-number {
+            color: #e94560;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        
+        .question-stat-respondents {
+            color: #8892b0;
+            font-size: 0.85em;
+            white-space: nowrap;
+        }
+        
+        .question-stat-bar-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .question-stat-bar {
+            flex: 1;
+            height: 24px;
+            background: rgba(231, 76, 60, 0.3);
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+        }
+        
+        .question-stat-bar-correct {
+            height: 100%;
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.8em;
+            font-weight: 600;
+            min-width: 40px;
+            transition: width 0.5s ease;
+        }
+        
+        .question-stat-bar-incorrect {
+            height: 100%;
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.8em;
+            font-weight: 600;
+            min-width: 40px;
+            flex: 1;
+        }
+        
+        .question-stat-bar-correct:empty,
+        .question-stat-bar-incorrect:empty {
+            min-width: 0;
+        }
+        
+        .question-stat-legend {
+            display: flex;
+            gap: 15px;
+            margin-top: 8px;
+            font-size: 0.85em;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        
+        .legend-dot.correct {
+            background: #2ecc71;
+        }
+        
+        .legend-dot.incorrect {
+            background: #e74c3c;
+        }
+        
+        .legend-text {
+            color: #8892b0;
+        }
+        
         .no-results {
             text-align: center;
             padding: 60px 20px;
@@ -995,6 +1141,7 @@
             let averageCount = 0;
             let poorCount = 0;
             let levelStats = {};
+            let questionStats = {}; // Статистика по вопросам
             
             for (const className in data) {
                 data[className].forEach(student => {
@@ -1016,6 +1163,26 @@
                     levelStats[level].correct += student.score;
                     levelStats[level].total += student.max_score;
                     levelStats[level].count++;
+                    
+                    // Статистика по вопросам
+                    if (!questionStats[level]) {
+                        questionStats[level] = {};
+                    }
+                    
+                    if (student.answers && Array.isArray(student.answers)) {
+                        student.answers.forEach((answerObj, i) => {
+                            const qNum = i + 1;
+                            if (!questionStats[level][qNum]) {
+                                questionStats[level][qNum] = { correct: 0, incorrect: 0, total: 0 };
+                            }
+                            questionStats[level][qNum].total++;
+                            if (answerObj.correct) {
+                                questionStats[level][qNum].correct++;
+                            } else {
+                                questionStats[level][qNum].incorrect++;
+                            }
+                        });
+                    }
                 });
             }
             
@@ -1076,6 +1243,66 @@
                         <span class="level-stat-value" style="color: ${barColor}">${percent}%</span>
                     </div>
                 `;
+            });
+            
+            html += '</div>';
+            
+            // Статистика по вопросам
+            html += `
+                <div class="questions-stats-section">
+                    <div class="questions-stats-title">📊 Статистика по вопросам</div>
+            `;
+            
+            sortedLevels.forEach(level => {
+                const levelName = getLevelName(level);
+                const qStats = questionStats[level];
+                
+                if (!qStats || Object.keys(qStats).length === 0) return;
+                
+                html += `
+                    <div class="test-level-group">
+                        <div class="test-level-title">${levelName}</div>
+                `;
+                
+                // Сортировка вопросов по номеру
+                const sortedQuestions = Object.keys(qStats).sort((a, b) => parseInt(a) - parseInt(b));
+                
+                sortedQuestions.forEach(qNum => {
+                    const stat = qStats[qNum];
+                    const correctPercent = stat.total > 0 ? Math.round((stat.correct / stat.total) * 100) : 0;
+                    const incorrectPercent = 100 - correctPercent;
+                    const questionText = getQuestionText(level, parseInt(qNum));
+                    
+                    html += `
+                        <div class="question-stat-item">
+                            <div class="question-stat-header">
+                                <div class="question-stat-text">
+                                    <span class="question-stat-number">Вопрос ${qNum}:</span>
+                                    ${escapeHtml(questionText)}
+                                </div>
+                                <div class="question-stat-respondents">${stat.total} отв.</div>
+                            </div>
+                            <div class="question-stat-bar-container">
+                                <div class="question-stat-bar">
+                                    ${correctPercent > 0 ? `<div class="question-stat-bar-correct" style="width: ${correctPercent}%">${correctPercent}%</div>` : ''}
+                                    ${incorrectPercent > 0 ? `<div class="question-stat-bar-incorrect">${incorrectPercent}%</div>` : ''}
+                                </div>
+                            </div>
+                            <div class="question-stat-legend">
+                                <div class="legend-item">
+                                    <span class="legend-dot correct"></span>
+                                    <span class="legend-text">Правильно: ${stat.correct}</span>
+                                </div>
+                                <div class="legend-item">
+                                    <span class="legend-dot incorrect"></span>
+                                    <span class="legend-text">Неправильно: ${stat.incorrect}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
             });
             
             html += '</div>';
