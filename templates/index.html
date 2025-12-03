@@ -809,6 +809,65 @@
             font-style: italic;
         }
         
+        /* Статистика для класса */
+        .class-stats-section {
+            margin-top: 25px;
+            padding-top: 25px;
+            border-top: 2px dashed rgba(255, 255, 255, 0.1);
+        }
+        
+        .class-stats-header h3 {
+            color: #e94560;
+            font-size: 1.3em;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .class-questions-stats {
+            margin-bottom: 20px;
+        }
+        
+        .class-stats-title {
+            color: #e8e8e8;
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            padding-left: 5px;
+        }
+        
+        .class-test-group {
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .class-question-stat {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+        
+        .class-question-stat .question-stat-text {
+            font-size: 0.95em;
+        }
+        
+        .global-stats-hint {
+            text-align: center;
+            margin-top: 25px;
+            padding: 15px;
+            background: rgba(233, 69, 96, 0.1);
+            border-radius: 10px;
+            border: 1px dashed rgba(233, 69, 96, 0.3);
+        }
+        
+        .global-stats-hint p {
+            color: #8892b0;
+            font-size: 1em;
+            margin: 0;
+        }
+        
         @media (max-width: 768px) {
             .header h1 {
                 font-size: 2em;
@@ -1138,6 +1197,12 @@
                             </tbody>
                         </table>
                         <div class="click-hint">Нажмите на строку ученика, чтобы увидеть подробности</div>
+                `;
+                
+                // Добавляем статистику для класса
+                html += generateClassStats(students, className);
+                
+                html += `
                     </div>
                 `;
             });
@@ -1148,127 +1213,50 @@
             showGlobalStats(data);
         }
         
-        function showGlobalStats(data) {
-            const section = document.getElementById('globalStatsSection');
+        function generateClassStats(students, className) {
+            let questionStats = {};
             
-            let totalCorrect = 0;
-            let totalQuestions = 0;
-            let totalResults = 0;
-            let excellentCount = 0;
-            let goodCount = 0;
-            let averageCount = 0;
-            let poorCount = 0;
-            let levelStats = {};
-            let questionStats = {}; // Статистика по вопросам
-            
-            for (const className in data) {
-                data[className].forEach(student => {
-                    totalCorrect += student.score;
-                    totalQuestions += student.max_score;
-                    totalResults++;
-                    
-                    const percent = (student.score / student.max_score) * 100;
-                    if (percent >= 90) excellentCount++;
-                    else if (percent >= 70) goodCount++;
-                    else if (percent >= 50) averageCount++;
-                    else poorCount++;
-                    
-                    // Статистика по уровням
-                    const level = student.level;
-                    if (!levelStats[level]) {
-                        levelStats[level] = { correct: 0, total: 0, count: 0 };
-                    }
-                    levelStats[level].correct += student.score;
-                    levelStats[level].total += student.max_score;
-                    levelStats[level].count++;
-                    
-                    // Статистика по вопросам
-                    if (!questionStats[level]) {
-                        questionStats[level] = {};
-                    }
-                    
-                    if (student.answers && Array.isArray(student.answers)) {
-                        student.answers.forEach((answerObj, i) => {
-                            const qNum = i + 1;
-                            if (!questionStats[level][qNum]) {
-                                questionStats[level][qNum] = { correct: 0, incorrect: 0, total: 0 };
-                            }
-                            questionStats[level][qNum].total++;
-                            if (answerObj.correct) {
-                                questionStats[level][qNum].correct++;
-                            } else {
-                                questionStats[level][qNum].incorrect++;
-                            }
-                        });
-                    }
-                });
-            }
-            
-            const avgPercent = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
-            const avgClass = avgPercent >= 90 ? 'excellent' : avgPercent >= 70 ? 'good' : avgPercent >= 50 ? 'average' : 'poor';
-            
-            let html = `
-                <div class="global-stats-header">
-                    <h2>Общая статистика по тестам</h2>
-                </div>
+            // Собираем статистику по классу
+            students.forEach(student => {
+                const level = student.level;
                 
-                <div class="stats-grid">
-                    <div class="stats-card">
-                        <div class="stats-card-value ${avgClass}">${avgPercent}%</div>
-                        <div class="stats-card-label">Средний процент правильных ответов</div>
-                    </div>
-                    <div class="stats-card">
-                        <div class="stats-card-value neutral">${totalCorrect}/${totalQuestions}</div>
-                        <div class="stats-card-label">Всего правильных ответов</div>
-                    </div>
-                    <div class="stats-card">
-                        <div class="stats-card-value excellent">${excellentCount}</div>
-                        <div class="stats-card-label">Отлично (90%+)</div>
-                    </div>
-                    <div class="stats-card">
-                        <div class="stats-card-value good">${goodCount}</div>
-                        <div class="stats-card-label">Хорошо (70-89%)</div>
-                    </div>
-                    <div class="stats-card">
-                        <div class="stats-card-value average">${averageCount}</div>
-                        <div class="stats-card-label">Удовлетворительно (50-69%)</div>
-                    </div>
-                    <div class="stats-card">
-                        <div class="stats-card-value poor">${poorCount}</div>
-                        <div class="stats-card-label">Неудовлетворительно (<50%)</div>
-                    </div>
-                </div>
+                // Статистика по вопросам
+                if (!questionStats[level]) {
+                    questionStats[level] = {};
+                }
                 
-                <div class="level-stats">
-                    <div class="level-stats-title">📈 Статистика по уровням сложности</div>
-            `;
-            
-            // Сортировка уровней
-            const sortedLevels = Object.keys(levelStats).sort();
-            
-            sortedLevels.forEach(level => {
-                const stats = levelStats[level];
-                const percent = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0;
-                const levelName = getLevelName(level);
-                const barColor = percent >= 90 ? '#2ecc71' : percent >= 70 ? '#3498db' : percent >= 50 ? '#f1c40f' : '#e74c3c';
-                
-                html += `
-                    <div class="level-stat-row">
-                        <span class="level-stat-name">${levelName}</span>
-                        <div class="level-stat-bar">
-                            <div class="level-stat-fill" style="width: ${percent}%; background: ${barColor};"></div>
-                        </div>
-                        <span class="level-stat-value" style="color: ${barColor}">${percent}%</span>
-                    </div>
-                `;
+                if (student.answers && Array.isArray(student.answers)) {
+                    student.answers.forEach((answerObj, i) => {
+                        const qNum = i + 1;
+                        if (!questionStats[level][qNum]) {
+                            questionStats[level][qNum] = { correct: 0, incorrect: 0, total: 0 };
+                        }
+                        questionStats[level][qNum].total++;
+                        if (answerObj.correct) {
+                            questionStats[level][qNum].correct++;
+                        } else {
+                            questionStats[level][qNum].incorrect++;
+                        }
+                    });
+                }
             });
             
-            html += '</div>';
+            // Проверяем, есть ли данные для статистики
+            if (Object.keys(questionStats).length === 0) {
+                return '';
+            }
             
-            // Статистика по вопросам
-            html += `
-                <div class="questions-stats-section">
-                    <div class="questions-stats-title">📊 Статистика по вопросам</div>
+            // Сортировка уровней
+            const sortedLevels = Object.keys(questionStats).sort();
+            
+            let html = `
+                <div class="class-stats-section">
+                    <div class="class-stats-header">
+                        <h3>📊 Статистика класса ${escapeHtml(className)}</h3>
+                    </div>
+                    
+                    <div class="class-questions-stats">
+                        <div class="class-stats-title">📝 Статистика по вопросам</div>
             `;
             
             sortedLevels.forEach(level => {
@@ -1278,7 +1266,7 @@
                 if (!qStats || Object.keys(qStats).length === 0) return;
                 
                 html += `
-                    <div class="test-level-group">
+                    <div class="test-level-group class-test-group">
                         <div class="test-level-title">${levelName}</div>
                 `;
                 
@@ -1292,7 +1280,7 @@
                     const questionText = getQuestionText(level, parseInt(qNum));
                     
                     html += `
-                        <div class="question-stat-item">
+                        <div class="question-stat-item class-question-stat">
                             <div class="question-stat-header">
                                 <div class="question-stat-text">
                                     <span class="question-stat-number">Вопрос ${qNum}:</span>
@@ -1323,7 +1311,75 @@
                 html += '</div>';
             });
             
-            html += '</div>';
+            html += '</div></div>';
+            
+            return html;
+        }
+        
+        function showGlobalStats(data) {
+            const section = document.getElementById('globalStatsSection');
+            
+            let totalCorrect = 0;
+            let totalQuestions = 0;
+            let totalResults = 0;
+            let excellentCount = 0;
+            let goodCount = 0;
+            let averageCount = 0;
+            let poorCount = 0;
+            
+            for (const className in data) {
+                data[className].forEach(student => {
+                    totalCorrect += student.score;
+                    totalQuestions += student.max_score;
+                    totalResults++;
+                    
+                    const percent = (student.score / student.max_score) * 100;
+                    if (percent >= 90) excellentCount++;
+                    else if (percent >= 70) goodCount++;
+                    else if (percent >= 50) averageCount++;
+                    else poorCount++;
+                });
+            }
+            
+            const avgPercent = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
+            const avgClass = avgPercent >= 90 ? 'excellent' : avgPercent >= 70 ? 'good' : avgPercent >= 50 ? 'average' : 'poor';
+            
+            let html = `
+                <div class="global-stats-header">
+                    <h2>Общая статистика по всем классам</h2>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stats-card">
+                        <div class="stats-card-value ${avgClass}">${avgPercent}%</div>
+                        <div class="stats-card-label">Средний процент правильных ответов</div>
+                    </div>
+                    <div class="stats-card">
+                        <div class="stats-card-value neutral">${totalCorrect}/${totalQuestions}</div>
+                        <div class="stats-card-label">Всего правильных ответов</div>
+                    </div>
+                    <div class="stats-card">
+                        <div class="stats-card-value excellent">${excellentCount}</div>
+                        <div class="stats-card-label">Отлично (90%+)</div>
+                    </div>
+                    <div class="stats-card">
+                        <div class="stats-card-value good">${goodCount}</div>
+                        <div class="stats-card-label">Хорошо (70-89%)</div>
+                    </div>
+                    <div class="stats-card">
+                        <div class="stats-card-value average">${averageCount}</div>
+                        <div class="stats-card-label">Удовлетворительно (50-69%)</div>
+                    </div>
+                    <div class="stats-card">
+                        <div class="stats-card-value poor">${poorCount}</div>
+                        <div class="stats-card-label">Неудовлетворительно (<50%)</div>
+                    </div>
+                </div>
+                
+                <div class="global-stats-hint">
+                    <p>📊 Подробная статистика по вопросам находится внутри каждого класса</p>
+                </div>
+            `;
             
             section.innerHTML = html;
             section.style.display = 'block';
