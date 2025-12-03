@@ -1,10 +1,58 @@
 from flask import Flask, render_template, request, jsonify
-from DBmanager import init_db, clear_db, save_test_result, get_all_tests, get_test_by_id, get_statistics, check_test_exists
+from DBmanager import init_db, clear_db, save_test_result, get_all_tests, get_test_by_id, get_statistics, check_test_exists, get_students_by_class
 
 app = Flask(__name__)
 
+# Путь к файлу с ключом
+KEY_FILE_PATH = 'key.txt'
+
+
+def get_teacher_key():
+    """Получение ключа учителя из файла"""
+    try:
+        with open(KEY_FILE_PATH, 'r', encoding='utf-8') as f:
+            return f.read().strip()
+    except Exception as e:
+        print(f"Ошибка при чтении ключа: {str(e)}")
+        return None
+
 # Инициализация базы данных при старте
 init_db()
+
+
+@app.route('/')
+def index():
+    """Главная страница с результатами учеников"""
+    return render_template('index.html')
+
+
+@app.route('/api/verify-key', methods=['POST'])
+def verify_key():
+    """Проверка ключа учителя и получение результатов"""
+    try:
+        data = request.get_json()
+        
+        if not data or 'key' not in data:
+            return jsonify({'status': 'error', 'message': 'Ключ не предоставлен'}), 400
+        
+        teacher_key = get_teacher_key()
+        if teacher_key is None:
+            return jsonify({'status': 'error', 'message': 'Ошибка сервера при чтении ключа'}), 500
+        
+        if data['key'].strip() != teacher_key:
+            return jsonify({'status': 'error', 'message': 'Неверный ключ доступа'}), 403
+        
+        # Ключ верный - возвращаем данные учеников по классам
+        students_by_class = get_students_by_class()
+        
+        return jsonify({
+            'status': 'success',
+            'data': students_by_class
+        }), 200
+        
+    except Exception as e:
+        print(f"Ошибка при проверке ключа: {str(e)}")
+        return jsonify({'status': 'error', 'message': 'Ошибка сервера'}), 500
 
 
 @app.route('/test/high-school-student/easy')

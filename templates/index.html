@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Результаты тестирования</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #e8e8e8;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            padding: 40px 20px;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.8em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #e94560, #f39c12);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+            text-shadow: 0 4px 30px rgba(233, 69, 96, 0.3);
+        }
+        
+        .header .subtitle {
+            color: #8892b0;
+            font-size: 1.2em;
+            font-weight: 400;
+        }
+        
+        /* Секция авторизации */
+        .auth-section {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            margin: 0 auto 40px auto;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .auth-section h2 {
+            color: #e94560;
+            margin-bottom: 25px;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .auth-section h2::before {
+            content: '🔐';
+            font-size: 1.2em;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            color: #8892b0;
+            font-size: 1em;
+            font-weight: 500;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            font-size: 16px;
+            background: rgba(0, 0, 0, 0.3);
+            color: #e8e8e8;
+            transition: all 0.3s ease;
+        }
+        
+        .form-group input::placeholder {
+            color: #5a6a8a;
+        }
+        
+        .form-group input:focus {
+            border-color: #e94560;
+            box-shadow: 0 0 0 4px rgba(233, 69, 96, 0.2);
+            outline: none;
+        }
+        
+        .submit-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #e94560, #f39c12);
+            color: white;
+            border: none;
+            padding: 16px;
+            font-size: 1.1em;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(233, 69, 96, 0.3);
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(233, 69, 96, 0.4);
+        }
+        
+        .submit-btn:active {
+            transform: translateY(-1px);
+        }
+        
+        .error-message {
+            color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.1);
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-top: 15px;
+            display: none;
+            animation: shake 0.5s ease;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        /* Секция результатов */
+        .results-section {
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        .class-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+            animation: slideUp 0.5s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .class-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(233, 69, 96, 0.3);
+        }
+        
+        .class-name {
+            font-size: 1.6em;
+            font-weight: 700;
+            color: #e94560;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .class-name::before {
+            content: '📚';
+            font-size: 1em;
+        }
+        
+        .student-count {
+            background: linear-gradient(135deg, #e94560, #f39c12);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+        
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            overflow: hidden;
+            border-radius: 12px;
+        }
+        
+        .results-table thead {
+            background: rgba(233, 69, 96, 0.2);
+        }
+        
+        .results-table th {
+            padding: 16px 20px;
+            text-align: left;
+            color: #e94560;
+            font-weight: 600;
+            font-size: 0.95em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .results-table tbody tr {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+        
+        .results-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .results-table td {
+            padding: 16px 20px;
+            color: #e8e8e8;
+            font-size: 1em;
+        }
+        
+        .score-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+        
+        .score-excellent {
+            background: rgba(46, 204, 113, 0.2);
+            color: #2ecc71;
+            border: 1px solid rgba(46, 204, 113, 0.3);
+        }
+        
+        .score-good {
+            background: rgba(52, 152, 219, 0.2);
+            color: #3498db;
+            border: 1px solid rgba(52, 152, 219, 0.3);
+        }
+        
+        .score-average {
+            background: rgba(241, 196, 15, 0.2);
+            color: #f1c40f;
+            border: 1px solid rgba(241, 196, 15, 0.3);
+        }
+        
+        .score-poor {
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+            border: 1px solid rgba(231, 76, 60, 0.3);
+        }
+        
+        .level-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            font-weight: 500;
+            background: rgba(155, 89, 182, 0.2);
+            color: #9b59b6;
+            border: 1px solid rgba(155, 89, 182, 0.3);
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: #8892b0;
+            font-size: 1.2em;
+        }
+        
+        .no-results::before {
+            content: '📋';
+            display: block;
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+        
+        .logout-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #8892b0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 12px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            margin-bottom: 30px;
+        }
+        
+        .logout-btn:hover {
+            background: rgba(233, 69, 96, 0.2);
+            color: #e94560;
+            border-color: rgba(233, 69, 96, 0.3);
+        }
+        
+        .stats-bar {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+        
+        .stat-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px 30px;
+            text-align: center;
+            flex: 1;
+            min-width: 150px;
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: 700;
+            color: #e94560;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #8892b0;
+            font-size: 0.9em;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .auth-section, .class-card {
+                padding: 25px;
+            }
+            
+            .results-table th, .results-table td {
+                padding: 12px 10px;
+                font-size: 0.9em;
+            }
+            
+            .class-header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Исторические тесты</h1>
+            <p class="subtitle">Система проверки результатов тестирования учеников</p>
+        </div>
+        
+        <!-- Секция авторизации -->
+        <div class="auth-section" id="authSection">
+            <h2>Доступ для учителя</h2>
+            <form id="authForm">
+                <div class="form-group">
+                    <label for="teacherKey">Введите ключ доступа</label>
+                    <input type="password" id="teacherKey" name="teacherKey" required 
+                           placeholder="Введите секретный ключ...">
+                </div>
+                <button type="submit" class="submit-btn">Показать результаты</button>
+                <div class="error-message" id="errorMessage"></div>
+            </form>
+        </div>
+        
+        <!-- Секция результатов -->
+        <div class="results-section" id="resultsSection">
+            <button class="logout-btn" onclick="logout()">
+                <span>🔒</span> Выйти
+            </button>
+            
+            <div class="stats-bar" id="statsBar">
+                <!-- Статистика будет добавлена через JavaScript -->
+            </div>
+            
+            <div id="classesContainer">
+                <!-- Таблицы по классам будут добавлены через JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('authForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const key = document.getElementById('teacherKey').value.trim();
+            const errorMessage = document.getElementById('errorMessage');
+            
+            if (!key) {
+                showError('Пожалуйста, введите ключ доступа');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/verify-key', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key })
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    errorMessage.style.display = 'none';
+                    showResults(result.data);
+                } else {
+                    showError(result.message || 'Неверный ключ доступа');
+                }
+                
+            } catch (error) {
+                console.error('Ошибка:', error);
+                showError('Ошибка соединения с сервером');
+            }
+        });
+        
+        function showError(message) {
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+        
+        function showResults(data) {
+            document.getElementById('authSection').style.display = 'none';
+            document.getElementById('resultsSection').style.display = 'block';
+            
+            const classesContainer = document.getElementById('classesContainer');
+            const statsBar = document.getElementById('statsBar');
+            
+            // Подсчёт статистики
+            let totalStudents = 0;
+            let totalClasses = Object.keys(data).length;
+            
+            for (const className in data) {
+                totalStudents += data[className].length;
+            }
+            
+            // Отображение статистики
+            statsBar.innerHTML = `
+                <div class="stat-item">
+                    <div class="stat-number">${totalClasses}</div>
+                    <div class="stat-label">Классов</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">${totalStudents}</div>
+                    <div class="stat-label">Результатов</div>
+                </div>
+            `;
+            
+            // Отображение результатов по классам
+            if (totalClasses === 0) {
+                classesContainer.innerHTML = '<div class="no-results">Пока нет результатов тестирования</div>';
+                return;
+            }
+            
+            let html = '';
+            
+            // Сортировка классов
+            const sortedClasses = Object.keys(data).sort((a, b) => {
+                const numA = parseInt(a.replace(/\D/g, '')) || 0;
+                const numB = parseInt(b.replace(/\D/g, '')) || 0;
+                if (numA !== numB) return numA - numB;
+                return a.localeCompare(b);
+            });
+            
+            sortedClasses.forEach((className, index) => {
+                const students = data[className];
+                
+                html += `
+                    <div class="class-card" style="animation-delay: ${index * 0.1}s">
+                        <div class="class-header">
+                            <div class="class-name">Класс ${className}</div>
+                            <div class="student-count">${students.length} ${getStudentWord(students.length)}</div>
+                        </div>
+                        <table class="results-table">
+                            <thead>
+                                <tr>
+                                    <th>Имя</th>
+                                    <th>Фамилия</th>
+                                    <th>Уровень</th>
+                                    <th>Результат</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                
+                students.forEach(student => {
+                    const scoreClass = getScoreClass(student.score, student.max_score);
+                    const levelName = getLevelName(student.level);
+                    
+                    html += `
+                        <tr>
+                            <td>${escapeHtml(student.first_name)}</td>
+                            <td>${escapeHtml(student.last_name)}</td>
+                            <td><span class="level-badge">${levelName}</span></td>
+                            <td><span class="score-badge ${scoreClass}">${student.score}/${student.max_score}</span></td>
+                        </tr>
+                    `;
+                });
+                
+                html += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            });
+            
+            classesContainer.innerHTML = html;
+        }
+        
+        function getScoreClass(score, maxScore) {
+            const percent = (score / maxScore) * 100;
+            if (percent >= 90) return 'score-excellent';
+            if (percent >= 70) return 'score-good';
+            if (percent >= 50) return 'score-average';
+            return 'score-poor';
+        }
+        
+        function getLevelName(level) {
+            const levels = {
+                '4_easy': 'Лёгкий (4)',
+                '6_medium': 'Средний (6)',
+                '8_hard': 'Сложный (8)',
+                '5_easy': 'Лёгкий (5)',
+                '7_medium': 'Средний (7)',
+                '10_hard': 'Сложный (10)'
+            };
+            return levels[level] || level;
+        }
+        
+        function getStudentWord(count) {
+            const lastDigit = count % 10;
+            const lastTwoDigits = count % 100;
+            
+            if (lastTwoDigits >= 11 && lastTwoDigits <= 19) {
+                return 'результатов';
+            }
+            
+            if (lastDigit === 1) {
+                return 'результат';
+            }
+            
+            if (lastDigit >= 2 && lastDigit <= 4) {
+                return 'результата';
+            }
+            
+            return 'результатов';
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function logout() {
+            document.getElementById('authSection').style.display = 'block';
+            document.getElementById('resultsSection').style.display = 'none';
+            document.getElementById('teacherKey').value = '';
+            document.getElementById('classesContainer').innerHTML = '';
+            document.getElementById('statsBar').innerHTML = '';
+        }
+    </script>
+</body>
+</html>
+

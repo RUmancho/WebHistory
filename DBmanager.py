@@ -224,3 +224,41 @@ def get_statistics():
     except Exception as e:
         print(f"Ошибка при получении статистики: {str(e)}")
         return {}
+
+
+def get_students_by_class():
+    """Получение всех учеников, сгруппированных по классам"""
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT class_name, first_name, last_name, score, max_score, level, created_at
+            FROM Test
+            ORDER BY class_name, last_name, first_name
+        ''')
+        
+        rows = cursor.fetchall()
+        conn.close()
+        
+        # Группировка по классам
+        classes = {}
+        for row in rows:
+            class_name = row['class_name']
+            if class_name not in classes:
+                classes[class_name] = []
+            
+            classes[class_name].append({
+                'first_name': row['first_name'],
+                'last_name': row['last_name'],
+                'score': row['score'],
+                'max_score': row['max_score'],
+                'level': row['level'],
+                'created_at': row['created_at']
+            })
+        
+        return classes
+        
+    except Exception as e:
+        print(f"Ошибка при получении учеников по классам: {str(e)}")
+        return {}
