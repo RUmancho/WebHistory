@@ -314,6 +314,20 @@
             box-shadow: 0 4px 10px rgba(231, 76, 60, 0.3);
         }
         
+        .school-logo {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+        }
+        
+        .school-logo img {
+            width: 120px;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
         .timer {
             position: fixed;
             top: 20px;
@@ -449,6 +463,10 @@
     </style>
 </head>
 <body>
+    <div class="school-logo">
+        <img src="/static/logo.png" alt="Логотип школы">
+    </div>
+    
     <div class="timer">
         <span>⏱️</span>
         <span id="timer">25:00</span>
@@ -476,6 +494,10 @@
                         <div class="form-group">
                             <label for="class">Класс</label>
                             <input type="text" id="class" name="class" required placeholder="Например: 7А или 8Б">
+                        </div>
+                        <div class="form-group">
+                            <label for="school">Школа</label>
+                            <input type="text" id="school" name="school" required placeholder="Например: Школа №189">
                         </div>
                     </div>
                     <p style="color: #7f8c8d; font-size: 0.95em; margin-top: 10px;">
@@ -697,6 +719,7 @@
             const firstName = document.getElementById('firstName').value.trim();
             const lastName = document.getElementById('lastName').value.trim();
             const userClass = document.getElementById('class').value.trim();
+            const school = document.getElementById('school').value.trim();
             
             if (!validateName(firstName)) {
                 showValidationError('firstName', 'Введите корректное имя (только буквы, минимум 2 символа)');
@@ -752,14 +775,14 @@
                 if (answer === correctAnswer) score++;
             }
             
-            await sendResultsToServer(firstName, lastName, userClass, userAnswers, score);
-            showResults(firstName, lastName, userClass, score);
+            await sendResultsToServer(firstName, lastName, userClass, school, userAnswers, score);
+            showResults(firstName, lastName, userClass, school, score);
         }
         
-        function showResults(firstName, lastName, userClass, score) {
+        function showResults(firstName, lastName, userClass, school, score) {
             document.getElementById('resultDetails').innerHTML = `
                 <strong>${firstName} ${lastName}</strong><br>
-                Класс: ${userClass}<br>Уровень: Средний<br>Тест: История 7-8 класс
+                Класс: ${userClass}<br>Школа: ${school}<br>Уровень: Средний<br>Тест: История 7-8 класс
             `;
             document.getElementById('scoreDisplay').innerHTML = `Правильных ответов: <strong>${score} из 4</strong>`;
             document.getElementById('resultModal').style.display = 'flex';
@@ -769,8 +792,8 @@
             document.getElementById('resultModal').style.display = 'none';
         }
         
-        async function sendResultsToServer(firstName, lastName, userClass, answers, score) {
-            const data = { firstName, lastName, className: userClass, answers, testLevel: '3_medium', score, maxScore: 4, time: 1500 - timeLeft };
+        async function sendResultsToServer(firstName, lastName, userClass, school, answers, score) {
+            const data = { firstName, lastName, className: userClass, school, answers, testLevel: '3_medium', score, maxScore: 4, time: 1500 - timeLeft };
             try {
                 const response = await fetch('/api/submit-test', {
                     method: 'POST',

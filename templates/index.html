@@ -24,6 +24,20 @@
             margin: 0 auto;
         }
         
+        .school-logo {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+        }
+        
+        .school-logo img {
+            width: 120px;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        
         .header {
             text-align: center;
             padding: 40px 20px;
@@ -835,6 +849,10 @@
     </style>
 </head>
 <body>
+    <div class="school-logo">
+        <img src="/static/logo.png" alt="Логотип школы">
+    </div>
+    
     <div class="container">
         <div class="header">
             <h1>Исторические тесты</h1>

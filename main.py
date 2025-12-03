@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 from DBmanager import *
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static', static_url_path='/static')
 
 # Путь к файлу с ключом
 KEY_FILE_PATH = 'key.txt'
@@ -150,6 +150,7 @@ def submit_test():
             first_name=data['firstName'],
             last_name=data['lastName'],
             class_name=data['className'],
+            school=data.get('school', ''),
             answers=data['answers'],
             score=data['score'],
             level=data['testLevel'],

@@ -32,6 +32,7 @@ def init_db():
             first_name TEXT NOT NULL,
             last_name TEXT NOT NULL,
             class_name TEXT NOT NULL,
+            school TEXT DEFAULT '',
             answers TEXT NOT NULL,
             score INTEGER NOT NULL,
             max_score INTEGER NOT NULL,
@@ -40,6 +41,12 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
         ''')
+        
+        # Добавляем колонку school если её нет (для существующих БД)
+        try:
+            cursor.execute('ALTER TABLE Test ADD COLUMN school TEXT DEFAULT ""')
+        except:
+            pass  # Колонка уже существует
         
         conn.commit()
         conn.close()
@@ -100,7 +107,7 @@ def check_test_exists(first_name, last_name, class_name, level):
         return {'exists': False}
 
 
-def save_test_result(first_name, last_name, class_name, answers, score, level, time=0):
+def save_test_result(first_name, last_name, class_name, school, answers, score, level, time=0):
     """Сохранение результатов теста в базу данных"""
     try:
         conn = get_connection()
@@ -115,9 +122,9 @@ def save_test_result(first_name, last_name, class_name, answers, score, level, t
         max_score = len(json.loads(answers_json) if isinstance(answers_json, str) else answers)
         
         cursor.execute('''
-        INSERT INTO Test (first_name, last_name, class_name, answers, score, max_score, level, time_spent)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (first_name.strip(), last_name.strip(), class_name.strip(), answers_json, score, max_score, level, time))
+        INSERT INTO Test (first_name, last_name, class_name, school, answers, score, max_score, level, time_spent)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (first_name.strip(), last_name.strip(), class_name.strip(), school.strip() if school else '', answers_json, score, max_score, level, time))
         
         test_id = cursor.lastrowid
         conn.commit()
@@ -146,6 +153,7 @@ def get_all_tests():
                 'first_name': row['first_name'],
                 'last_name': row['last_name'],
                 'class_name': row['class_name'],
+                'school': row['school'] if 'school' in row.keys() else '',
                 'answers': json.loads(row['answers']),
                 'score': row['score'],
                 'max_score': row['max_score'],
@@ -177,6 +185,7 @@ def get_test_by_id(test_id):
                 'first_name': row['first_name'],
                 'last_name': row['last_name'],
                 'class_name': row['class_name'],
+                'school': row['school'] if 'school' in row.keys() else '',
                 'answers': json.loads(row['answers']),
                 'score': row['score'],
                 'max_score': row['max_score'],
@@ -233,7 +242,7 @@ def get_students_by_class():
         cursor = conn.cursor()
         
         cursor.execute('''
-            SELECT id, class_name, first_name, last_name, answers, score, max_score, level, created_at
+            SELECT id, class_name, first_name, last_name, school, answers, score, max_score, level, created_at
             FROM Test
             ORDER BY class_name, last_name, first_name
         ''')
@@ -252,6 +261,7 @@ def get_students_by_class():
                 'id': row['id'],
                 'first_name': row['first_name'],
                 'last_name': row['last_name'],
+                'school': row['school'] if 'school' in row.keys() else '',
                 'answers': json.loads(row['answers']),
                 'score': row['score'],
                 'max_score': row['max_score'],
