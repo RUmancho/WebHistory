@@ -468,6 +468,29 @@
             border-left: 4px solid #e74c3c;
         }
         
+        /* Секция теста в подробностях ученика */
+        .test-section {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+        }
+        
+        .test-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .test-header {
+            color: #f39c12;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            background: rgba(243, 156, 18, 0.1);
+            border-radius: 8px;
+            border-left: 3px solid #f39c12;
+        }
+        
         /* Статистика по вопросам */
         .questions-stats-section {
             margin-top: 30px;
@@ -923,6 +946,11 @@
             <h2>Доступ для учителя</h2>
             <form id="authForm">
                 <div class="form-group">
+                    <label for="schoolNumber">Номер школы</label>
+                    <input type="number" id="schoolNumber" name="schoolNumber" required 
+                           placeholder="Например: 189" min="1" max="9999">
+                </div>
+                <div class="form-group">
                     <label for="teacherKey">Введите ключ доступа</label>
                     <input type="password" id="teacherKey" name="teacherKey" required 
                            placeholder="Введите секретный ключ...">
@@ -1057,17 +1085,21 @@
             const statsBar = document.getElementById('statsBar');
             
             // Подсчёт статистики
-            let totalResults = 0;
+            let totalStudents = 0;
             let totalClasses = Object.keys(data).length;
             let totalCorrect = 0;
             let totalQuestions = 0;
             
             for (const className in data) {
-                totalResults += data[className].length;
+                // Подсчёт уникальных учеников
+                const uniqueKeys = new Set();
                 data[className].forEach(student => {
+                    const key = `${student.first_name.toLowerCase()}_${student.last_name.toLowerCase()}`;
+                    uniqueKeys.add(key);
                     totalCorrect += student.score;
                     totalQuestions += student.max_score;
                 });
+                totalStudents += uniqueKeys.size;
             }
             
             const avgPercent = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
@@ -1079,8 +1111,8 @@
                     <div class="stat-label">Классов</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-number">${totalResults}</div>
-                    <div class="stat-label">Результатов</div>
+                    <div class="stat-number">${totalStudents}</div>
+                    <div class="stat-label">Учеников</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-number">${avgPercent}%</div>
@@ -1108,11 +1140,41 @@
             sortedClasses.forEach((className, classIndex) => {
                 const students = data[className];
                 
+                // Группируем учеников по имени и фамилии
+                const groupedStudents = {};
+                students.forEach(student => {
+                    const key = `${student.first_name.toLowerCase()}_${student.last_name.toLowerCase()}`;
+                    if (!groupedStudents[key]) {
+                        groupedStudents[key] = {
+                            first_name: student.first_name,
+                            last_name: student.last_name,
+                            tests: []
+                        };
+                    }
+                    groupedStudents[key].tests.push({
+                        level: student.level,
+                        score: student.score,
+                        max_score: student.max_score,
+                        answers: student.answers
+                    });
+                });
+                
+                // Сортируем тесты каждого ученика по сложности
+                for (const key in groupedStudents) {
+                    groupedStudents[key].tests = sortLevelsByDifficulty(
+                        groupedStudents[key].tests.map(t => t.level)
+                    ).map(level => {
+                        return groupedStudents[key].tests.find(t => t.level === level);
+                    });
+                }
+                
+                const uniqueStudents = Object.values(groupedStudents);
+                
                 html += `
                     <div class="class-card" style="animation-delay: ${classIndex * 0.1}s">
                         <div class="class-header">
                             <div class="class-name">Класс ${escapeHtml(className)}</div>
-                            <div class="student-count">${students.length} ${getStudentWord(students.length)}</div>
+                            <div class="student-count">${uniqueStudents.length} ${getStudentWord(uniqueStudents.length)}</div>
                         </div>
                         <table class="results-table">
                             <thead>
@@ -1126,67 +1188,87 @@
                             <tbody>
                 `;
                 
-                students.forEach((student, studentIndex) => {
-                    const scoreClass = getScoreClass(student.score, student.max_score);
-                    const levelName = getLevelName(student.level);
+                uniqueStudents.forEach((student, studentIndex) => {
                     const studentId = `student-${classIndex}-${studentIndex}`;
-                    const percent = Math.round((student.score / student.max_score) * 100);
+                    
+                    // Формируем строку уровней и результатов
+                    const levelNames = student.tests.map(t => getLevelName(t.level)).join(' / ');
+                    const results = student.tests.map(t => Math.round((t.score / t.max_score) * 100) + '%').join(' / ');
+                    
+                    // Определяем общий класс результата (по среднему)
+                    const totalScore = student.tests.reduce((sum, t) => sum + t.score, 0);
+                    const totalMax = student.tests.reduce((sum, t) => sum + t.max_score, 0);
+                    const scoreClass = getScoreClass(totalScore, totalMax);
                     
                     html += `
                         <tr class="student-row" onclick="toggleDetails('${studentId}')" id="row-${studentId}">
                             <td>${escapeHtml(student.first_name)} <span class="expand-icon">▼</span></td>
                             <td>${escapeHtml(student.last_name)}</td>
-                            <td><span class="level-badge">${levelName}</span></td>
-                            <td><span class="score-badge ${scoreClass}">${student.score}/${student.max_score} (${percent}%)</span></td>
+                            <td><span class="level-badge">${levelNames}</span></td>
+                            <td><span class="score-badge ${scoreClass}">${results}</span></td>
                         </tr>
                     `;
                     
-                    // Детали ученика
+                    // Детали ученика - показываем все тесты
                     html += `
                         <tr>
                             <td colspan="4" style="padding: 0; border: none;">
                                 <div class="student-details" id="${studentId}">
-                                    <div class="details-header">
-                                        📝 Подробные результаты ответов:
-                                    </div>
-                                    <div class="answers-list">
                     `;
                     
-                    if (student.answers && Array.isArray(student.answers)) {
-                        student.answers.forEach((answerObj, i) => {
-                            const isCorrect = answerObj.correct;
-                            const blockClass = isCorrect ? 'correct-block' : 'incorrect-block';
-                            const icon = isCorrect ? '✅' : '❌';
-                            const userAnswer = answerObj.answer ? answerObj.answer.toUpperCase() : '—';
-                            const correctAnswer = answerObj.correct_answer ? answerObj.correct_answer.toUpperCase() : '';
-                            const questionText = getQuestionText(student.level, i + 1);
-                            
-                            html += `
-                                <div class="question-block ${blockClass}">
-                                    <div class="question-header">
-                                        <span class="question-icon">${icon}</span>
-                                        <div class="question-content">
-                                            <div class="question-title">Вопрос ${i + 1}</div>
-                                            <div class="question-text-full">${escapeHtml(questionText)}</div>
-                                            <div class="answer-info">
-                                                ${isCorrect ? `
-                                                    <span class="answer-label correct-answer">Ответ: ${userAnswer} ✓</span>
-                                                ` : `
-                                                    <span class="answer-label wrong-answer">Ответ ученика: ${userAnswer}</span>
-                                                    <span class="answer-label correct-answer">Правильный ответ: ${correctAnswer}</span>
-                                                `}
+                    // Для каждого теста показываем подробности
+                    student.tests.forEach((test, testIndex) => {
+                        const levelName = getLevelName(test.level);
+                        const percent = Math.round((test.score / test.max_score) * 100);
+                        
+                        html += `
+                            <div class="test-section">
+                                <div class="test-header">
+                                    📝 Тест: <strong>${levelName}</strong> — ${test.score}/${test.max_score} (${percent}%)
+                                </div>
+                                <div class="answers-list">
+                        `;
+                        
+                        if (test.answers && Array.isArray(test.answers)) {
+                            test.answers.forEach((answerObj, i) => {
+                                const isCorrect = answerObj.correct;
+                                const blockClass = isCorrect ? 'correct-block' : 'incorrect-block';
+                                const icon = isCorrect ? '✅' : '❌';
+                                const userAnswer = answerObj.answer ? answerObj.answer.toUpperCase() : '—';
+                                const correctAnswer = answerObj.correct_answer ? answerObj.correct_answer.toUpperCase() : '';
+                                const questionText = getQuestionText(test.level, i + 1);
+                                
+                                html += `
+                                    <div class="question-block ${blockClass}">
+                                        <div class="question-header">
+                                            <span class="question-icon">${icon}</span>
+                                            <div class="question-content">
+                                                <div class="question-title">Вопрос ${i + 1}</div>
+                                                <div class="question-text-full">${escapeHtml(questionText)}</div>
+                                                <div class="answer-info">
+                                                    ${isCorrect ? `
+                                                        <span class="answer-label correct-answer">Ответ: ${userAnswer} ✓</span>
+                                                    ` : `
+                                                        <span class="answer-label wrong-answer">Ответ ученика: ${userAnswer}</span>
+                                                        <span class="answer-label correct-answer">Правильный ответ: ${correctAnswer}</span>
+                                                    `}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
+                                `;
+                            });
+                        } else {
+                            html += '<div style="color: #8892b0;">Нет данных об ответах</div>';
+                        }
+                        
+                        html += `
                                 </div>
-                            `;
-                        });
-                    } else {
-                        html += '<div style="color: #8892b0;">Нет данных об ответах</div>';
-                    }
+                            </div>
+                        `;
+                    });
                     
                     html += `
-                                    </div>
                                 </div>
                             </td>
                         </tr>
@@ -1246,8 +1328,8 @@
                 return '';
             }
             
-            // Сортировка уровней
-            const sortedLevels = Object.keys(questionStats).sort();
+            // Сортировка уровней по сложности (лёгкий -> средний -> тяжёлый)
+            const sortedLevels = sortLevelsByDifficulty(Object.keys(questionStats));
             
             let html = `
                 <div class="class-stats-section">
@@ -1414,38 +1496,37 @@
             return 'score-poor';
         }
         
-        function getLevelName(level) {
-            const levels = {
-                '4_easy': 'Лёгкий (4 вопроса)',
-                '6_medium': 'Средний (6 вопросов)',
-                '8_hard': 'Сложный (8 вопросов)',
-                '5_easy': 'Лёгкий (5 вопросов)',
-                '7_medium': 'Средний (7 вопросов)',
-                '10_hard': 'Сложный (10 вопросов)',
-                '3_easy': 'Лёгкий (3 вопроса)',
-                '4_medium': 'Средний (4 вопроса)',
-                '5_medium': 'Средний (5 вопросов)'
+        function getLevelName(level, short = true) {
+            const difficultyRu = {
+                'easy': 'лёгкий',
+                'medium': 'средний',
+                'hard': 'тяжёлый'
             };
             
-            if (levels[level]) {
-                return levels[level];
-            }
-            
-            // Попытка распарсить неизвестный уровень
+            // Попытка распарсить уровень
             const match = level.match(/^(\d+)_(\w+)$/);
             if (match) {
-                const num = match[1];
                 const difficulty = match[2];
-                const difficultyRu = {
-                    'easy': 'Лёгкий',
-                    'medium': 'Средний',
-                    'hard': 'Сложный'
-                };
-                const diffName = difficultyRu[difficulty] || difficulty;
-                return `${diffName} (${num} ${getQuestionWord(parseInt(num))})`;
+                return difficultyRu[difficulty] || difficulty;
             }
             
             return level;
+        }
+        
+        // Получить порядок сложности для сортировки
+        function getDifficultyOrder(level) {
+            const match = level.match(/^(\d+)_(\w+)$/);
+            if (match) {
+                const difficulty = match[2];
+                const order = { 'easy': 1, 'medium': 2, 'hard': 3 };
+                return order[difficulty] || 99;
+            }
+            return 99;
+        }
+        
+        // Сортировка уровней по сложности
+        function sortLevelsByDifficulty(levels) {
+            return levels.sort((a, b) => getDifficultyOrder(a) - getDifficultyOrder(b));
         }
         
         function getQuestionWord(count) {
