@@ -25,10 +25,8 @@
         }
         
         .school-logo {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 1000;
+            text-align: center;
+            margin-bottom: 20px;
         }
         
         .school-logo img {
@@ -113,29 +111,46 @@
             border-radius: 12px;
             font-size: 16px;
             background: rgba(0, 0, 0, 0.3);
+            color: #ffffff;
             cursor: pointer;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
         }
         
-        .form-group select {
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238892b0' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 15px center;
+        .form-group input:-webkit-autofill,
+        .form-group input:-webkit-autofill:hover,
+        .form-group input:-webkit-autofill:focus {
+            -webkit-text-fill-color: #ffffff;
+            -webkit-box-shadow: 0 0 0px 1000px rgba(0, 0, 0, 0.3) inset;
+            transition: background-color 5000s ease-in-out 0s;
         }
         
-        .form-group select:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
+        .field-hint {
+            margin-top: 8px;
+            font-size: 0.95em;
+            min-height: 20px;
+            font-weight: 600;
+            padding: 5px 10px;
+            border-radius: 5px;
         }
         
-        .form-group select option {
-            background: #1a1a2e;
-            color: #e8e8e8;
-            transition: all 0.3s ease;
+        .field-hint.error {
+            color: #ffffff;
+            background: rgba(255, 71, 87, 0.9);
+        }
+        
+        .field-hint.success {
+            color: #ffffff;
+            background: rgba(46, 213, 115, 0.9);
+        }
+        
+        .field-hint.info {
+            color: #ffffff;
+            background: rgba(116, 125, 140, 0.8);
         }
         
         .form-group input::placeholder {
-            color: #5a6a8a;
+            color: #7a8ab0;
+            opacity: 1;
         }
         
         .form-group input:focus {
@@ -887,11 +902,47 @@
             border-top: 2px dashed rgba(255, 255, 255, 0.1);
         }
         
+        .class-stats-header {
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.3s ease;
+        }
+        
+        .class-stats-header:hover {
+            opacity: 0.85;
+        }
+        
         .class-stats-header h3 {
             color: #e94560;
             font-size: 1.3em;
             margin-bottom: 20px;
             text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .class-stats-toggle {
+            display: inline-block;
+            transition: transform 0.3s ease;
+            font-size: 0.8em;
+        }
+        
+        .class-stats-section.collapsed .class-stats-toggle {
+            transform: rotate(-90deg);
+        }
+        
+        .class-stats-content {
+            max-height: 2000px;
+            overflow: hidden;
+            transition: max-height 0.4s ease-out, opacity 0.3s ease;
+            opacity: 1;
+        }
+        
+        .class-stats-section.collapsed .class-stats-content {
+            max-height: 0;
+            opacity: 0;
         }
         
         .class-questions-stats {
@@ -979,11 +1030,11 @@
     </style>
 </head>
 <body>
-    <div class="school-logo">
-        <img src="/static/logo.png" alt="Логотип школы">
-    </div>
-    
     <div class="container">
+        <div class="school-logo">
+            <img src="/static/logo.png" alt="Логотип школы">
+        </div>
+        
         <div class="header">
             <h1>Исторические тесты</h1>
             <p class="subtitle">Система проверки результатов тестирования учеников</p>
@@ -994,16 +1045,16 @@
             <h2>Доступ для учителя</h2>
             <form id="authForm">
                 <div class="form-group">
-                    <label for="citySelect">Город</label>
-                    <select id="citySelect" name="citySelect" required>
-                        <option value="">-- Выберите город --</option>
-                    </select>
+                    <label for="cityInput">Город</label>
+                    <input type="text" id="cityInput" name="cityInput" required 
+                           placeholder="Введите название города...">
+                    <div class="field-hint" id="cityHint"></div>
                 </div>
                 <div class="form-group">
-                    <label for="schoolSelect">Школа</label>
-                    <select id="schoolSelect" name="schoolSelect" required disabled>
-                        <option value="">-- Сначала выберите город --</option>
-                    </select>
+                    <label for="schoolInput">Номер школы</label>
+                    <input type="number" id="schoolInput" name="schoolInput" required 
+                           placeholder="Введите номер школы..." min="1" max="9999">
+                    <div class="field-hint" id="schoolHint"></div>
                 </div>
                 <div class="form-group">
                     <label for="teacherKey">Введите ключ доступа</label>
@@ -1107,75 +1158,179 @@
         let citiesData = {};
         let selectedCity = '';
         let selectedSchool = '';
+        let cityValid = false;
+        let schoolValid = false;
         
         // Загрузка городов и школ при старте
         async function loadCitiesAndSchools() {
             try {
                 const response = await fetch('/api/cities-schools');
+                
+                if (!response.ok) {
+                    throw new Error('Сервер недоступен');
+                }
+                
                 const result = await response.json();
                 
                 if (result.status === 'success') {
                     citiesData = result.data;
-                    const citySelect = document.getElementById('citySelect');
                     
-                    // Добавляем города в выпадающий список
-                    for (const city in citiesData) {
-                        const option = document.createElement('option');
-                        option.value = city;
-                        option.textContent = city;
-                        citySelect.appendChild(option);
+                    // Показываем подсказку если база пустая
+                    if (Object.keys(citiesData).length === 0) {
+                        const cityHint = document.getElementById('cityHint');
+                        cityHint.textContent = 'ℹ️ База данных пуста. Сначала ученики должны пройти тесты.';
+                        cityHint.className = 'field-hint info';
                     }
                 }
             } catch (error) {
                 console.error('Ошибка загрузки городов:', error);
+                const cityHint = document.getElementById('cityHint');
+                cityHint.textContent = '⚠️ Не удалось загрузить данные. Проверьте подключение к серверу.';
+                cityHint.className = 'field-hint error';
             }
         }
         
-        // Обработчик изменения города
-        document.getElementById('citySelect').addEventListener('change', function() {
-            const city = this.value;
-            selectedCity = city;
-            const schoolSelect = document.getElementById('schoolSelect');
+        // Функция для поиска города (регистр не важен)
+        function findCity(inputCity) {
+            const normalizedInput = inputCity.trim().toLowerCase();
+            for (const city in citiesData) {
+                if (city.toLowerCase() === normalizedInput) {
+                    return city; // Возвращаем оригинальное название города
+                }
+            }
+            return null;
+        }
+        
+        // Функция для поиска школы в городе (регистр не важен)
+        function findSchool(city, inputSchool) {
+            const schoolNum = inputSchool.toString().trim();
+            if (citiesData[city]) {
+                for (const school of citiesData[city]) {
+                    if (school.toString() === schoolNum) {
+                        return school;
+                    }
+                }
+            }
+            return null;
+        }
+        
+        // Обработчик ввода города
+        document.getElementById('cityInput').addEventListener('input', function() {
+            const cityHint = document.getElementById('cityHint');
+            const schoolHint = document.getElementById('schoolHint');
+            const inputCity = this.value.trim();
             
-            // Очищаем и заполняем список школ
-            schoolSelect.innerHTML = '<option value="">-- Выберите школу --</option>';
+            if (!inputCity) {
+                cityHint.textContent = '';
+                cityHint.className = 'field-hint';
+                cityValid = false;
+                selectedCity = '';
+                return;
+            }
             
-            if (city && citiesData[city]) {
-                schoolSelect.disabled = false;
-                citiesData[city].forEach(school => {
-                    const option = document.createElement('option');
-                    option.value = school;
-                    option.textContent = `Школа №${school}`;
-                    schoolSelect.appendChild(option);
-                });
+            const foundCity = findCity(inputCity);
+            if (foundCity) {
+                cityHint.textContent = `✓ Город "${foundCity}" найден`;
+                cityHint.className = 'field-hint success';
+                cityValid = true;
+                selectedCity = foundCity;
+                // Проверяем школу если она уже введена
+                const schoolInput = document.getElementById('schoolInput');
+                if (schoolInput.value) {
+                    schoolInput.dispatchEvent(new Event('input'));
+                }
             } else {
-                schoolSelect.disabled = true;
-                schoolSelect.innerHTML = '<option value="">-- Сначала выберите город --</option>';
+                cityHint.textContent = `✗ Данные о тестировании не найдены для города "${inputCity}"`;
+                cityHint.className = 'field-hint error';
+                cityValid = false;
+                selectedCity = '';
+                schoolHint.textContent = '';
+                schoolHint.className = 'field-hint';
+                schoolValid = false;
             }
         });
         
-        document.getElementById('schoolSelect').addEventListener('change', function() {
-            selectedSchool = this.value;
+        // Обработчик ввода школы
+        document.getElementById('schoolInput').addEventListener('input', function() {
+            const schoolHint = document.getElementById('schoolHint');
+            const inputSchool = this.value.trim();
+            
+            if (!inputSchool) {
+                schoolHint.textContent = '';
+                schoolHint.className = 'field-hint';
+                schoolValid = false;
+                selectedSchool = '';
+                return;
+            }
+            
+            if (!cityValid || !selectedCity) {
+                schoolHint.textContent = 'Сначала введите корректный город';
+                schoolHint.className = 'field-hint info';
+                schoolValid = false;
+                selectedSchool = '';
+                return;
+            }
+            
+            const foundSchool = findSchool(selectedCity, inputSchool);
+            if (foundSchool) {
+                schoolHint.textContent = `✓ Школа №${foundSchool} найдена в г. ${selectedCity}`;
+                schoolHint.className = 'field-hint success';
+                schoolValid = true;
+                selectedSchool = foundSchool;
+            } else {
+                schoolHint.textContent = `✗ Данные о тестировании не найдены для школы №${inputSchool} в г. ${selectedCity}`;
+                schoolHint.className = 'field-hint error';
+                schoolValid = false;
+                selectedSchool = '';
+            }
         });
         
         // Загружаем данные при старте
         loadCitiesAndSchools();
         
+        // Автозагрузка сохранённого пароля
+        function loadSavedPassword() {
+            const savedPassword = localStorage.getItem('teacherAccessKey');
+            if (savedPassword) {
+                document.getElementById('teacherKey').value = savedPassword;
+            }
+        }
+        
+        // Сохранение пароля в localStorage
+        function savePassword(password) {
+            if (password) {
+                localStorage.setItem('teacherAccessKey', password);
+            }
+        }
+        
+        // Загружаем сохранённый пароль при загрузке страницы
+        loadSavedPassword();
+        
         document.getElementById('authForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const city = document.getElementById('citySelect').value;
-            const school = document.getElementById('schoolSelect').value;
+            const cityInput = document.getElementById('cityInput').value.trim();
+            const schoolInput = document.getElementById('schoolInput').value.trim();
             const key = document.getElementById('teacherKey').value.trim();
             const errorMessage = document.getElementById('errorMessage');
             
-            if (!city) {
-                showError('Пожалуйста, выберите город');
+            if (!cityInput) {
+                showError('Пожалуйста, введите город');
                 return;
             }
             
-            if (!school) {
-                showError('Пожалуйста, выберите школу');
+            if (!cityValid) {
+                showError(`Данные о тестировании не найдены для города "${cityInput}"`);
+                return;
+            }
+            
+            if (!schoolInput) {
+                showError('Пожалуйста, введите номер школы');
+                return;
+            }
+            
+            if (!schoolValid) {
+                showError(`Данные о тестировании не найдены для школы №${schoolInput} в г. ${selectedCity}`);
                 return;
             }
             
@@ -1188,16 +1343,28 @@
                 const response = await fetch('/api/verify-key', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ key, city, school })
+                    body: JSON.stringify({ key, city: selectedCity, school: selectedSchool })
                 });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ошибка: ${response.status}`);
+                }
                 
                 const result = await response.json();
                 
                 if (result.status === 'success') {
                     errorMessage.style.display = 'none';
                     allData = result.data;
-                    selectedCity = city;
-                    selectedSchool = school;
+                    
+                    // Сохраняем пароль после успешной авторизации
+                    savePassword(key);
+                    
+                    // Проверяем есть ли данные
+                    if (Object.keys(result.data).length === 0) {
+                        showError(`Данные о тестировании не найдены для школы №${selectedSchool} в г. ${selectedCity}.`);
+                        return;
+                    }
+                    
                     showResults(result.data);
                 } else {
                     showError(result.message || 'Неверный ключ доступа');
@@ -1205,7 +1372,11 @@
                 
             } catch (error) {
                 console.error('Ошибка:', error);
-                showError('Ошибка соединения с сервером');
+                if (error.message.includes('Failed to fetch')) {
+                    showError('Не удалось подключиться к серверу. Проверьте, что сервер запущен.');
+                } else {
+                    showError('Ошибка при загрузке данных: ' + error.message);
+                }
             }
         });
         
@@ -1265,7 +1436,7 @@
             
             // Отображение результатов по классам
             if (totalClasses === 0) {
-                classesContainer.innerHTML = '<div class="no-results">Пока нет результатов тестирования</div>';
+                classesContainer.innerHTML = '<div class="no-results">Данные о тестировании не найдены</div>';
                 document.getElementById('globalStatsSection').style.display = 'none';
                 return;
             }
@@ -1479,14 +1650,17 @@
             // Сортировка уровней по сложности (лёгкий -> средний -> тяжёлый)
             const sortedLevels = sortLevelsByDifficulty(Object.keys(questionStats));
             
+            const statsId = `class-stats-${className.replace(/\s/g, '-')}`;
+            
             let html = `
-                <div class="class-stats-section">
-                    <div class="class-stats-header">
-                        <h3>📊 Статистика класса ${escapeHtml(className)}</h3>
+                <div class="class-stats-section collapsed" id="${statsId}">
+                    <div class="class-stats-header" onclick="toggleClassStats('${statsId}')">
+                        <h3>📊 Статистика класса ${escapeHtml(className)} <span class="class-stats-toggle">▼</span></h3>
                     </div>
                     
-                    <div class="class-questions-stats">
-                        <div class="class-stats-title">📝 Статистика по вопросам</div>
+                    <div class="class-stats-content">
+                        <div class="class-questions-stats">
+                            <div class="class-stats-title">📝 Статистика по вопросам</div>
             `;
             
             sortedLevels.forEach(level => {
@@ -1541,9 +1715,16 @@
                 html += '</div>';
             });
             
-            html += '</div></div>';
+            html += '</div></div></div>';
             
             return html;
+        }
+        
+        function toggleClassStats(statsId) {
+            const section = document.getElementById(statsId);
+            if (section) {
+                section.classList.toggle('collapsed');
+            }
         }
         
         function showGlobalStats(data) {
