@@ -13,7 +13,8 @@
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            background: linear-gradient(135deg, rgba(26, 26, 46, 0.9) 0%, rgba(22, 33, 62, 0.9) 50%, rgba(15, 52, 96, 0.9) 100%),
+                        url('/static/h1.jpg') center/cover no-repeat fixed;
             min-height: 100vh;
             padding: 20px;
             color: #e8e8e8;
@@ -1392,7 +1393,7 @@
             
             // Показываем выбранный город и школу
             document.getElementById('selectedLocation').innerHTML = `
-                <h3>📍 ${escapeHtml(selectedCity)} — <span>Школа №${escapeHtml(selectedSchool)}</span></h3>
+                <h3>${escapeHtml(selectedCity)} — <span>Школа №${escapeHtml(selectedSchool)}</span></h3>
             `;
             
             const classesContainer = document.getElementById('classesContainer');
@@ -1489,7 +1490,7 @@
                     <div class="class-card" style="animation-delay: ${classIndex * 0.1}s">
                         <div class="class-header">
                             <div class="class-name">Класс ${escapeHtml(className)}</div>
-                            <div class="student-count">${uniqueStudents.length} ${getStudentWord(uniqueStudents.length)}</div>
+                            <div class="student-count">тесты прошло: ${uniqueStudents.length} ${getStudentWord(uniqueStudents.length)}</div>
                         </div>
                         <table class="results-table">
                             <thead>
@@ -1882,18 +1883,18 @@
             const lastTwoDigits = count % 100;
             
             if (lastTwoDigits >= 11 && lastTwoDigits <= 19) {
-                return 'результатов';
+                return 'учеников';
             }
             
             if (lastDigit === 1) {
-                return 'результат';
+                return 'ученик';
             }
             
             if (lastDigit >= 2 && lastDigit <= 4) {
-                return 'результата';
+                return 'ученика';
             }
             
-            return 'результатов';
+            return 'учеников';
         }
         
         function escapeHtml(text) {
