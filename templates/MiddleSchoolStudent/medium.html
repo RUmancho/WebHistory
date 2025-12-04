@@ -125,10 +125,39 @@
             background: white;
         }
         
-        .form-group input:focus {
+        .form-group input:focus,
+        .form-group select:focus {
             border-color: #e74c3c;
             box-shadow: 0 0 0 4px rgba(231, 76, 60, 0.15);
             outline: none;
+        }
+        
+        .form-group select {
+            width: 100%;
+            padding: 14px 20px;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%232c3e50' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+        }
+        
+        .class-parallel-row {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .class-parallel-row .form-group:first-child {
+            flex: 1;
+        }
+        
+        .class-parallel-row .form-group:last-child {
+            flex: 1;
         }
         
         .questions-section h2 {
@@ -489,9 +518,45 @@
                             <label for="lastName">Фамилия</label>
                             <input type="text" id="lastName" name="lastName" required placeholder="Введите вашу фамилию">
                         </div>
-                        <div class="form-group">
-                            <label for="class">Класс</label>
-                            <input type="text" id="class" name="class" required placeholder="Например: 7А или 8Б">
+                        <div class="class-parallel-row">
+                            <div class="form-group">
+                                <label for="classNumber">Класс</label>
+                                <input type="number" id="classNumber" name="classNumber" required placeholder="7, 8" min="7" max="8">
+                            </div>
+                            <div class="form-group">
+                                <label for="classParallel">Параллель</label>
+                                <select id="classParallel" name="classParallel" required>
+                                    <option value="">--</option>
+                                    <option value="А">А</option>
+                                    <option value="Б">Б</option>
+                                    <option value="В">В</option>
+                                    <option value="Г">Г</option>
+                                    <option value="Д">Д</option>
+                                    <option value="Е">Е</option>
+                                    <option value="Ж">Ж</option>
+                                    <option value="З">З</option>
+                                    <option value="И">И</option>
+                                    <option value="К">К</option>
+                                    <option value="Л">Л</option>
+                                    <option value="М">М</option>
+                                    <option value="Н">Н</option>
+                                    <option value="О">О</option>
+                                    <option value="П">П</option>
+                                    <option value="Р">Р</option>
+                                    <option value="С">С</option>
+                                    <option value="Т">Т</option>
+                                    <option value="У">У</option>
+                                    <option value="Ф">Ф</option>
+                                    <option value="Х">Х</option>
+                                    <option value="Ц">Ц</option>
+                                    <option value="Ч">Ч</option>
+                                    <option value="Ш">Ш</option>
+                                    <option value="Щ">Щ</option>
+                                    <option value="Э">Э</option>
+                                    <option value="Ю">Ю</option>
+                                    <option value="Я">Я</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label for="city">Город</label>
@@ -720,7 +785,9 @@
         async function submitTest() {
             const firstName = document.getElementById('firstName').value.trim();
             const lastName = document.getElementById('lastName').value.trim();
-            const userClass = document.getElementById('class').value.trim();
+            const classNumber = document.getElementById('classNumber').value.trim();
+            const classParallel = document.getElementById('classParallel').value;
+            const userClass = classNumber + classParallel;
             const city = document.getElementById('city').value.trim();
             const school = document.getElementById('school').value.trim();
             
@@ -732,8 +799,12 @@
                 showValidationError('lastName', 'Введите корректную фамилию (только буквы, минимум 2 символа)');
                 return;
             }
-            if (!userClass) {
-                alert('Пожалуйста, укажите класс!');
+            if (!classNumber) {
+                alert('Пожалуйста, укажите номер класса!');
+                return;
+            }
+            if (!classParallel) {
+                alert('Пожалуйста, выберите параллель!');
                 return;
             }
             if (!city) {

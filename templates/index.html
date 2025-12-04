@@ -1046,8 +1046,9 @@
             <form id="authForm">
                 <div class="form-group">
                     <label for="cityInput">Город</label>
-                    <input type="text" id="cityInput" name="cityInput" required 
-                           placeholder="Введите название города...">
+                    <select id="cityInput" name="cityInput" required>
+                        <option value="">-- Выберите город --</option>
+                    </select>
                     <div class="field-hint" id="cityHint"></div>
                 </div>
                 <div class="form-group">
@@ -1175,11 +1176,22 @@
                 if (result.status === 'success') {
                     citiesData = result.data;
                     
+                    const citySelect = document.getElementById('cityInput');
+                    const cityHint = document.getElementById('cityHint');
+                    
                     // Показываем подсказку если база пустая
                     if (Object.keys(citiesData).length === 0) {
-                        const cityHint = document.getElementById('cityHint');
                         cityHint.textContent = 'ℹ️ База данных пуста. Сначала ученики должны пройти тесты.';
                         cityHint.className = 'field-hint info';
+                    } else {
+                        // Заполняем выпадающий список городами
+                        const cities = Object.keys(citiesData).sort();
+                        cities.forEach(city => {
+                            const option = document.createElement('option');
+                            option.value = city;
+                            option.textContent = city;
+                            citySelect.appendChild(option);
+                        });
                     }
                 }
             } catch (error) {
@@ -1214,39 +1226,32 @@
             return null;
         }
         
-        // Обработчик ввода города
-        document.getElementById('cityInput').addEventListener('input', function() {
+        // Обработчик выбора города
+        document.getElementById('cityInput').addEventListener('change', function() {
             const cityHint = document.getElementById('cityHint');
             const schoolHint = document.getElementById('schoolHint');
-            const inputCity = this.value.trim();
+            const inputCity = this.value;
             
             if (!inputCity) {
                 cityHint.textContent = '';
                 cityHint.className = 'field-hint';
                 cityValid = false;
                 selectedCity = '';
-                return;
-            }
-            
-            const foundCity = findCity(inputCity);
-            if (foundCity) {
-                cityHint.textContent = `✓ Город "${foundCity}" найден`;
-                cityHint.className = 'field-hint success';
-                cityValid = true;
-                selectedCity = foundCity;
-                // Проверяем школу если она уже введена
-                const schoolInput = document.getElementById('schoolInput');
-                if (schoolInput.value) {
-                    schoolInput.dispatchEvent(new Event('input'));
-                }
-            } else {
-                cityHint.textContent = `✗ Данные о тестировании не найдены для города "${inputCity}"`;
-                cityHint.className = 'field-hint error';
-                cityValid = false;
-                selectedCity = '';
                 schoolHint.textContent = '';
                 schoolHint.className = 'field-hint';
                 schoolValid = false;
+                return;
+            }
+            
+            cityHint.textContent = `✓ Город "${inputCity}" выбран`;
+            cityHint.className = 'field-hint success';
+            cityValid = true;
+            selectedCity = inputCity;
+            
+            // Проверяем школу если она уже введена
+            const schoolInput = document.getElementById('schoolInput');
+            if (schoolInput.value) {
+                schoolInput.dispatchEvent(new Event('input'));
             }
         });
         
@@ -1309,18 +1314,13 @@
         document.getElementById('authForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const cityInput = document.getElementById('cityInput').value.trim();
+            const cityInput = document.getElementById('cityInput').value;
             const schoolInput = document.getElementById('schoolInput').value.trim();
             const key = document.getElementById('teacherKey').value.trim();
             const errorMessage = document.getElementById('errorMessage');
             
             if (!cityInput) {
-                showError('Пожалуйста, введите город');
-                return;
-            }
-            
-            if (!cityValid) {
-                showError(`Данные о тестировании не найдены для города "${cityInput}"`);
+                showError('Пожалуйста, выберите город');
                 return;
             }
             
