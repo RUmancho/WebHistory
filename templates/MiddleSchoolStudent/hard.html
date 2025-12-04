@@ -488,6 +488,38 @@
         .modal-close:hover {
             background: #34495e;
         }
+        
+        .result-message {
+            margin-top: 15px;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 1em;
+            line-height: 1.4;
+        }
+        
+        .result-excellent {
+            background: linear-gradient(135deg, rgba(46, 204, 113, 0.2), rgba(39, 174, 96, 0.2));
+            color: #27ae60;
+            border: 1px solid rgba(46, 204, 113, 0.3);
+        }
+        
+        .result-good {
+            background: linear-gradient(135deg, rgba(52, 152, 219, 0.2), rgba(41, 128, 185, 0.2));
+            color: #3498db;
+            border: 1px solid rgba(52, 152, 219, 0.3);
+        }
+        
+        .result-average {
+            background: linear-gradient(135deg, rgba(241, 196, 15, 0.2), rgba(243, 156, 18, 0.2));
+            color: #f39c12;
+            border: 1px solid rgba(241, 196, 15, 0.3);
+        }
+        
+        .result-poor {
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.2), rgba(192, 57, 43, 0.2));
+            color: #e74c3c;
+            border: 1px solid rgba(231, 76, 60, 0.3);
+        }
     </style>
 </head>
 <body>
@@ -942,9 +974,72 @@
         }
         
         function showResults(firstName, lastName, userClass, city, school, score) {
-            document.getElementById('resultDetails').innerHTML = `<strong>${firstName} ${lastName}</strong><br>Класс: ${userClass}<br>Город: ${city}<br>Школа №${school}<br>Уровень: Тяжелый<br>Тест: История 7-8 класс`;
-            document.getElementById('scoreDisplay').innerHTML = `Правильных ответов: <strong>${score} из 4</strong>`;
+            const percent = (score / 4) * 100;
+            let emoji, message, messageClass;
+            
+            if (percent >= 90) {
+                emoji = '🏆';
+                message = getRandomPraise('excellent');
+                messageClass = 'result-excellent';
+            } else if (percent >= 70) {
+                emoji = '🌟';
+                message = getRandomPraise('good');
+                messageClass = 'result-good';
+            } else if (percent >= 50) {
+                emoji = '📚';
+                message = getRandomPraise('average');
+                messageClass = 'result-average';
+            } else {
+                emoji = '💪';
+                message = getRandomPraise('poor');
+                messageClass = 'result-poor';
+            }
+            
+            document.querySelector('.modal-icon').textContent = emoji;
+            document.getElementById('resultDetails').innerHTML = `
+                <strong>${firstName} ${lastName}</strong><br>
+                Класс: ${userClass}<br>
+                Город: ${city}<br>
+                Школа №${school}<br>
+                Уровень: Тяжёлый<br>
+                Тест: История 7-8 класс
+            `;
+            document.getElementById('scoreDisplay').innerHTML = `
+                Правильных ответов: <strong>${score} из 4</strong>
+                <div class="result-message ${messageClass}">${message}</div>
+            `;
             document.getElementById('resultModal').style.display = 'flex';
+        }
+        
+        function getRandomPraise(level) {
+            const praises = {
+                excellent: [
+                    '🎉 Превосходно! Ты настоящий знаток истории!',
+                    '⭐ Великолепно! Ты супер!',
+                    '🏅 Отлично! Молодец!',
+                    '👏 Браво! Блестящий результат!'
+                ],
+                good: [
+                    '👍 Хорошо! Ты молодец!',
+                    '✨ Здорово! Так держать!',
+                    '🌈 Отличная работа! Ещё чуть-чуть до идеала!',
+                    '💫 Молодец! Хороший результат!'
+                ],
+                average: [
+                    '📖 Неплохо! Рекомендуем повторить материал по истории.',
+                    '🔍 Есть над чем поработать. Попробуй ещё раз!',
+                    '📝 Средний результат. Почитай учебник истории.',
+                    '💭 Можно лучше! Повтори исторические факты.'
+                ],
+                poor: [
+                    '📚 Рекомендуем пополнить знания в области истории и исторических фактов.',
+                    '🎯 Не сдавайся! Изучи материал и попробуй снова.',
+                    '📖 Советуем внимательно прочитать учебник истории.',
+                    '💪 Не расстраивайся! История — интересный предмет, попробуй ещё!'
+                ]
+            };
+            const list = praises[level];
+            return list[Math.floor(Math.random() * list.length)];
         }
         
         function closeModal() { document.getElementById('resultModal').style.display = 'none'; }
